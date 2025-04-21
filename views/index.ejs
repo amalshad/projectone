@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="top-bar">
+      <div class="container">
+        <p class="free-shipping-text">Free Shipping for orders over $50</p>
+        <div class="top-links">
+          <a href="#">About</a>
+          <a href="#">Contact</a>
+          <a href="#">Help Center</a>
+          <a href="#">Call us: 123-456-7890</a>
+        </div>
+      </div>
+    </div>
+    <div class="main-header">
+      <div class="container">
+        <div class="header-content">
+          <div class="logo">
+            <a href="/">Shad Electro</a>
+          </div>
+          <div class="search-bar">
+            <form action="/search" method="GET">
+              <input type="text" name="q" placeholder="Search...">
+              <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+          </div>
+          <div class="header-actions">
+            <a href="/account" class="account-link"><i class="fas fa-user"></i></a>
+            <a href="/wishlist" class="wishlist-link"><i class="fas fa-heart"></i></a>
+            <a href="/cart" class="cart-link">
+              <i class="fas fa-shopping-cart"></i>
+              <span class="cart-count">0</span>
+            </a>
+            <a href="/login" class="login-link">Log In</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="main-nav">
+      <div class="container">
+        <ul class="nav-links">
+          <li><a href="/shop">Shop All</a></li>
+          <li><a href="/computers">Computers</a></li>
+          <li><a href="/tablets">Tablets</a></li>
+          <li><a href="/drones-cameras">Drones & Cameras</a></li>
+          <li><a href="/audio">Audio</a></li>
+          <li><a href="/mobile">Mobile</a></li>
+          <li><a href="/tv-cinema">TV & Home Cinema</a></li>
+          <li><a href="/wearable">Wearable Tech</a></li>
+          <li><a href="/sale" class="sale-link">Sale</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-text">
+          <div class="best-prices-tag">Best Prices</div>
+          <h1>Incredible Prices on All Your Favorite Items</h1>
+          <p>Get more for less on selected brands</p>
+          <a href="#" class="btn btn-primary">Shop Now</a>
+        </div>
+        <div class="hero-image">
+          <img src="/images/img1.avif" alt="Latest technology devices">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Promo Banners -->
+  <section class="promo-banners">
+    <div class="container">
+      <div class="banner-grid">
+        <div class="promo-banner red-banner">
+          <div class="banner-content">
+            <p class="banner-subtitle">Holiday Deals</p>
+            <h3 class="banner-title">Up to 30% off</h3>
+            <p class="banner-description">Selected Smartphone Brands</p>
+            <a href="#" class="btn btn-outline-light">Shop</a>
+          </div>
+          <div class="banner-image">
+            <img src="/images/10001.jpg" alt="Smartphone on red background">
+          </div>
+        </div>
+        <div class="promo-banner purple-banner">
+          <div class="banner-content">
+            <p class="banner-subtitle">Just In</p>
+            <h3 class="banner-title">Take Your Sound Anywhere</h3>
+            <p class="banner-description">Top Headphone Brands</p>
+            <a href="#" class="btn btn-outline-light">Shop</a>
+          </div>
+          <div class="banner-image">
+            <img src="/images/headphones-banner.jpg" alt="Headphones on purple background">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="container">
+      <div class="features-grid">
+        <div class="feature">
+          <div class="feature-icon">
+            <i class="fas fa-truck"></i>
+          </div>
+          <div class="feature-text">
+            <h3>Curb-side pickup</h3>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <i class="fas fa-box"></i>
+          </div>
+          <div class="feature-text">
+            <h3>Free shipping on orders over $50</h3>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <i class="fas fa-tag"></i>
+          </div>
+          <div class="feature-text">
+            <h3>Low prices guaranteed</h3>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="feature-text">
+            <h3>Available to you 24/7</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Best Sellers -->
+  <section class="product-section">
+    <div class="container">
+      <h2 class="section-title">Best Sellers</h2>
+      <div class="product-slider">
+        <button class="slider-arrow prev-arrow"><i class="fas fa-chevron-left"></i></button>
+        <div class="product-grid">
+          <% products.bestSellers.forEach(product => { %>
+            <div class="product-card">
+              <% if (product.sale) { %>
+                <div class="sale-badge">SALE</div>
+              <% } %>
+              <div class="product-image">
+                <img src="<%= product.image %>" alt="<%= product.name %>">
+              </div>
+              <div class="product-info">
+                <h3 class="product-name"><%= product.name %></h3>
+                <div class="product-price">
+                  <% if (product.originalPrice) { %>
+                    <span class="current-price">$<%= product.price.toFixed(2) %></span>
+                    <span class="original-price">$<%= product.originalPrice.toFixed(2) %></span>
+                  <% } else { %>
+                    <span class="current-price">$<%= product.price.toFixed(2) %></span>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+        <button class="slider-arrow next-arrow"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      <div class="view-all-container">
+        <a href="#" class="btn btn-primary">View All</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Product -->
+  <section class="featured-product">
+    <div class="container">
+      <div class="featured-content">
+        <div class="featured-image">
+          <img src="/images/featured-laptop.jpg" alt="Laptop and speaker">
+        </div>
+        <div class="featured-text">
+          <div class="best-price-badge">
+            <span>Best</span>
+            <span>Price</span>
+          </div>
+          <h2>Save up to</h2>
+          <p class="price-highlight">$150</p>
+          <p class="featured-description">on selected laptop & tablets brands</p>
+          <p class="terms">Terms and conditions apply</p>
+          <a href="#" class="btn btn-primary">Shop</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shop by Category -->
+  <section class="categories">
+    <div class="container">
+      <h2 class="section-title">Shop by Category</h2>
+      <div class="category-grid">
+        <% categories.forEach(category => { %>
+          <div class="category-card <%= category.highlight ? 'highlight' : '' %> <%= category.dark ? 'dark' : '' %>">
+            <div class="category-image">
+              <img src="<%= category.image %>" alt="<%= category.name %>">
+            </div>
+            <h3 class="category-name"><%= category.name %></h3>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+
+  <!-- On Sale -->
+  <section class="product-section">
+    <div class="container">
+      <h2 class="section-title">On Sale</h2>
+      <div class="product-slider">
+        <button class="slider-arrow prev-arrow"><i class="fas fa-chevron-left"></i></button>
+        <div class="product-grid">
+          <% products.onSale.forEach(product => { %>
+            <div class="product-card">
+              <% if (product.sale) { %>
+                <div class="sale-badge">SALE</div>
+              <% } %>
+              <div class="product-image">
+                <img src="<%= product.image %>" alt="<%= product.name %>">
+              </div>
+              <div class="product-info">
+                <h3 class="product-name"><%= product.name %></h3>
+                <div class="product-price">
+                  <% if (product.originalPrice) { %>
+                    <span class="current-price">$<%= product.price.toFixed(2) %></span>
+                    <span class="original-price">$<%= product.originalPrice.toFixed(2) %></span>
+                  <% } else { %>
+                    <span class="current-price">$<%= product.price.toFixed(2) %></span>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+        <button class="slider-arrow next-arrow"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      <div class="view-all-container">
+        <a href="#" class="btn btn-primary">View All</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Help Center Banner -->
+  <section class="help-center-banner">
+    <div class="container">
+      <div class="help-banner-grid">
+        <div class="help-content">
+          <h2>Need Help? Check Out Our Help Center</h2>
+          <p>I'm a paragraph. Click here to add your own text and edit me. Let your users get to know you.</p>
+          <a href="#" class="btn btn-outline-light">Go to Help Center</a>
+        </div>
+        <div class="help-image">
+          <img src="/images/help-center.jpg" alt="Tech support">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h3>Store Location</h3>
+          <address>
+            <p>500 Terry Francine Street</p>
+            <p>San Francisco, CA 94158</p>
+            <p>info@mysite.com</p>
+            <p>123-456-7890</p>
+          </address>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h3>Shop</h3>
+          <ul>
+            <li><a href="/shop">Shop All</a></li>
+            <li><a href="/computers">Computers</a></li>
+            <li><a href="/tablets">Tablets</a></li>
+            <li><a href="/drones-cameras">Drones & Cameras</a></li>
+            <li><a href="/audio">Audio</a></li>
+            <li><a href="/mobile">Mobile</a></li>
+            <li><a href="/tv-cinema">TV & Home Cinema</a></li>
+            <li><a href="/wearable">Wearable Tech</a></li>
+            <li><a href="/sale">Sale</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Customer Support</h3>
+          <ul>
+            <li><a href="/contact">Contact Us</a></li>
+            <li><a href="/help">Help Center</a></li>
+            <li><a href="/about">About Us</a></li>
+            <li><a href="/careers">Careers</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Policy</h3>
+          <ul>
+            <li><a href="/shipping">Shipping & Returns</a></li>
+            <li><a href="/terms">Terms & Conditions</a></li>
+            <li><a href="/payment">Payment Methods</a></li>
+            <li><a href="/faq">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="payment-methods">
+        <p>We accept the following payment methods:</p>
+        <div class="payment-icons">
+          <img src="/images/visa.png" alt="Visa">
+          <img src="/images/mastercard.png" alt="Mastercard">
+          <img src="/images/amex.png" alt="American Express">
+          <img src="/images/unionpay.png" alt="Union Pay">
+          <img src="/images/jcb.png" alt="JCB">
+          <img src="/images/diners.png" alt="Diners Club">
+          <img src="/images/discover.png" alt="Discover">
+          <img src="/images/paypal.png" alt="PayPal">
+        </div>
+      </div>
+      <div class="copyright">
+        <p>&copy; 2025 TechShed. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script src="/tailwind.config.js"></script>
+</body>
+</html>

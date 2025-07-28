@@ -1,0 +1,491 @@
+<%- include("../../views/partials/admin/header") %>
+
+<main class="flex-1 overflow-auto p-8">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Category Management</h1>
+        <p class="text-gray-600">Organize and manage your product categories</p>
+      </div>
+      
+      <!-- Action Bar -->
+      <div class="flex items-center space-x-4">
+        <!-- Search Bar -->
+        <form action="/admin/category" method="GET" class="flex items-center bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="pl-4">
+            <i class="fas fa-search text-gray-400"></i>
+          </div>
+          <input 
+            type="text" 
+            name="search" 
+            placeholder="Search categories..." 
+            value="<%= typeof search !== 'undefined' ? search : '' %>"
+            class="px-4 py-3 bg-transparent focus:outline-none text-gray-700 placeholder-gray-400 w-64"
+          />
+          <button type="submit" class="bg-gradient-to-r from-primary to-primary-hover text-white px-6 py-3 hover:shadow-lg transition-all duration-300">
+            <i class="fas fa-search"></i>
+          </button>
+        </form>
+        
+        <!-- Add Category Button -->
+        <button onclick="toggleAddForm()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex items-center space-x-2">
+          <i class="fas fa-plus"></i>
+          <span>Add Category</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100 hover:shadow-lg transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total Categories</p>
+          <p class="text-2xl font-bold text-gray-900"><%= categories.length %></p>
+        </div>
+        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+          <i class="fas fa-tags text-white"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100 hover:shadow-lg transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Active Categories</p>
+          <p class="text-2xl font-bold text-green-600"><%= categories.filter(c => c.isListed).length %></p>
+        </div>
+        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+          <i class="fas fa-check-circle text-white"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100 hover:shadow-lg transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Hidden Categories</p>
+          <p class="text-2xl font-bold text-red-600"><%= categories.filter(c => !c.isListed).length %></p>
+        </div>
+        <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
+          <i class="fas fa-eye-slash text-white"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100 hover:shadow-lg transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">With Offers</p>
+          <p class="text-2xl font-bold text-purple-600">12</p>
+        </div>
+        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+          <i class="fas fa-percent text-white"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Category Form -->
+  <div id="addCategoryForm" class="bg-white rounded-2xl card-shadow border border-gray-100 p-8 mb-8 hidden transform transition-all duration-300">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+        <i class="fas fa-plus-circle text-primary mr-3"></i>
+        <span id="formTitle">Add New Category</span>
+      </h3>
+      <button onclick="toggleAddForm()" class="text-gray-400 hover:text-gray-600 transition-colors duration-300">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    
+    <form onsubmit="handleFormSubmit(event)" class="space-y-6">
+      <input type="hidden" name="editId" id="editId">
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-gray-700">
+            <i class="fas fa-tag text-primary mr-2"></i>Category Name
+          </label>
+          <input 
+            type="text" 
+            name="name" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 bg-gray-50 hover:bg-white"
+            placeholder="Enter category name"
+          />
+          <p id="name-error" class="text-red-500 text-sm mt-1 error-message hidden flex items-center">
+            <i class="fas fa-exclamation-triangle mr-1"></i>
+            <span></span>
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-gray-700">
+            <i class="fas fa-align-left text-primary mr-2"></i>Description
+          </label>
+          <textarea 
+            name="description" 
+            id="description" 
+            rows="4"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 bg-gray-50 hover:bg-white resize-none"
+            placeholder="Enter category description"
+          ></textarea>
+          <p id="description-error" class="text-red-500 text-sm mt-1 error-message hidden flex items-center">
+            <i class="fas fa-exclamation-triangle mr-1"></i>
+            <span></span>
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+        <button type="button" onclick="toggleAddForm()" class="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors duration-300">
+          Cancel
+        </button>
+        <button type="submit" class="bg-gradient-to-r from-primary to-primary-hover text-white px-8 py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex items-center space-x-2">
+          <i class="fas fa-save"></i>
+          <span id="submitText">Add Category</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Categories Table -->
+  <div class="bg-white rounded-2xl card-shadow border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+      <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+        <i class="fas fa-list text-primary mr-3"></i>
+        Categories List
+      </h3>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Description</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% categories.forEach((category, index) => { %>
+            <tr class="hover:bg-gray-50 transition-colors duration-200" style="animation-delay: <%= index * 0.1 %>s;">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-hover rounded-xl flex items-center justify-center text-white font-semibold text-sm">
+                    <%= category.name.charAt(0).toUpperCase() %>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-semibold text-gray-900"><%= category.name %></div>
+                    <div class="text-sm text-gray-500">ID: #<%= category._id.toString().slice(-6) %></div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-900 max-w-xs truncate"><%= category.description %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span id="status-<%= category._id %>" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium <%= category.isListed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                  <div class="w-2 h-2 rounded-full <%= category.isListed ? 'bg-green-500' : 'bg-red-500' %> mr-2"></div>
+                  <%= category.isListed ? 'Active' : 'Hidden' %>
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex items-center space-x-2">
+                  <!-- Edit Button -->
+                  <button onclick="showEditForm('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')" 
+                          class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex items-center space-x-1">
+                    <i class="fas fa-edit"></i>
+                    <span>Edit</span>
+                  </button>
+                  
+                  <!-- Toggle Status -->
+                  <button id="toggle-btn-<%= category._id %>" 
+                          onclick="toggleCategoryStatus('<%= category._id %>')" 
+                          class="<%= category.isListed ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' %> text-white px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex items-center space-x-1">
+                    <i class="fas <%= category.isListed ? 'fa-eye-slash' : 'fa-eye' %>"></i>
+                    <span><%= category.isListed ? 'Hide' : 'Show' %></span>
+                  </button>
+                  
+                  <!-- Add Offer -->
+                  <a href="/admin/categories/<%= category._id %>/offer" 
+                     class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex items-center space-x-1">
+                    <i class="fas fa-percent"></i>
+                    <span>Offer</span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Enhanced Pagination -->
+  <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="text-sm text-gray-600">
+      Showing <%= ((currentPage - 1) * 10) + 1 %> to <%= Math.min(currentPage * 10, categories.length) %> of <%= categories.length %> categories
+    </div>
+    
+    <nav class="flex items-center space-x-1">
+      <% if (currentPage > 1) { %>
+        <a href="?search=<%= search %>&page=<%= currentPage - 1 %>" 
+           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50 transition-colors duration-300">
+          <i class="fas fa-chevron-left mr-1"></i>Previous
+        </a>
+      <% } else { %>
+        <span class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-l-lg cursor-not-allowed">
+          <i class="fas fa-chevron-left mr-1"></i>Previous
+        </span>
+      <% } %>
+
+      <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+        <a href="?search=<%= search %>&page=<%= i %>" 
+           class="px-4 py-2 text-sm font-medium <%= i === currentPage ? 'text-white bg-gradient-to-r from-primary to-primary-hover border-primary' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50' %> border transition-all duration-300">
+          <%= i %>
+        </a>
+      <% } %>
+
+      <% if (currentPage < totalPages) { %>
+        <a href="?search=<%= search %>&page=<%= currentPage + 1 %>" 
+           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50 transition-colors duration-300">
+          Next<i class="fas fa-chevron-right ml-1"></i>
+        </a>
+      <% } else { %>
+        <span class="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-r-lg cursor-not-allowed">
+          Next<i class="fas fa-chevron-right ml-1"></i>
+        </span>
+      <% } %>
+    </nav>
+  </div>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  function showEditForm(id, name, description) {
+    toggleAddForm();
+    document.getElementById("editId").value = id;
+    document.getElementsByName("name")[0].value = name;
+    document.getElementById("description").value = description;
+    document.getElementById("formTitle").textContent = "Edit Category";
+    document.getElementById("submitText").textContent = "Update Category";
+    clearErrorMessage();
+    document.getElementById("addCategoryForm").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function handleFormSubmit(event) {
+    event.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalContent = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+    submitBtn.disabled = true;
+
+    const id = document.getElementById("editId").value.trim();
+    const name = document.getElementsByName("name")[0].value.trim();
+    const description = document.getElementById("description").value.trim();
+    const url = id ? `/admin/editCategory/${id}` : "/admin/addCategory";
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ name, description, editId: id })
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => {
+          throw new Error(err.error || "Failed to process category");
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      Swal.fire({
+        title: 'Success!',
+        text: `Category ${id ? 'updated' : 'added'} successfully!`,
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'rounded-2xl'
+        }
+      }).then(() => {
+        location.reload();
+      });
+    })
+    .catch(error => {
+      submitBtn.innerHTML = originalContent;
+      submitBtn.disabled = false;
+      
+      const msg = error.message === "Category already exists"
+        ? "Category already exists"
+        : "Error occurred while processing the category";
+      
+      Swal.fire({
+        icon: "error",
+        title: "Oops!",
+        text: msg,
+        customClass: {
+          popup: 'rounded-2xl'
+        }
+      });
+    });
+  }
+
+  function validateForm() {
+    clearErrorMessage();
+    const name = document.getElementsByName("name")[0].value.trim();
+    const description = document.getElementById("description").value.trim();
+    let isValid = true;
+
+    if (name === "") {
+      displayErrorMessage("name-error", "Please enter a category name");
+      isValid = false;
+    } else if (!/^[a-zA-Z\s]+$/.test(name)) {
+      displayErrorMessage("name-error", "Name should contain only alphabetic characters");
+      isValid = false;
+    }
+
+    if (description === "") {
+      displayErrorMessage("description-error", "Please enter a description");
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  function displayErrorMessage(elementId, message) {
+    const errorElement = document.getElementById(elementId);
+    errorElement.querySelector('span').textContent = message;
+    errorElement.classList.remove("hidden");
+    errorElement.style.display = "flex";
+  }
+
+  function clearErrorMessage() {
+    const errorElements = document.getElementsByClassName("error-message");
+    Array.from(errorElements).forEach((element) => {
+      element.querySelector('span').textContent = "";
+      element.style.display = "none";
+      element.classList.add("hidden");
+    });
+  }
+
+  function toggleAddForm() {
+    const form = document.getElementById("addCategoryForm");
+    const isHidden = form.classList.contains('hidden');
+    
+    if (isHidden) {
+      form.classList.remove('hidden');
+      // Reset form for new category
+      document.getElementById("editId").value = "";
+      document.getElementsByName("name")[0].value = "";
+      document.getElementById("description").value = "";
+      document.getElementById("formTitle").textContent = "Add New Category";
+      document.getElementById("submitText").textContent = "Add Category";
+      clearErrorMessage();
+    } else {
+      form.classList.add('hidden');
+    }
+  }
+
+  function toggleCategoryStatus(categoryId) {
+    const currentButton = document.getElementById(`toggle-btn-${categoryId}`);
+    const currentAction = currentButton.textContent.trim().includes('Hide') ? 'Hide' : 'Show';
+    
+    Swal.fire({
+      title: `${currentAction} Category`,
+      text: `Are you sure you want to ${currentAction.toLowerCase()} this category?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: "#8a2be2",
+      cancelButtonColor: "#d33",
+      confirmButtonText: `Yes, ${currentAction.toLowerCase()} it!`,
+      customClass: {
+        popup: 'rounded-2xl'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Add loading state
+        const originalContent = currentButton.innerHTML;
+        currentButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        currentButton.disabled = true;
+
+        fetch(`/admin/listCategory/${categoryId}`, {
+          method: 'POST'
+        })
+        .then(response => {
+          if (!response.ok) throw new Error("Failed to toggle category status");
+          return response.json();
+        })
+        .then(data => {
+          // Update Status Badge
+          const statusSpan = document.getElementById(`status-${categoryId}`);
+          const button = document.getElementById(`toggle-btn-${categoryId}`);
+          
+          if (data.isListed) {
+            statusSpan.innerHTML = '<div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>Active';
+            statusSpan.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800";
+            button.innerHTML = '<i class="fas fa-eye-slash"></i><span>Hide</span>';
+            button.className = "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex items-center space-x-1";
+          } else {
+            statusSpan.innerHTML = '<div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>Hidden';
+            statusSpan.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800";
+            button.innerHTML = '<i class="fas fa-eye"></i><span>Show</span>';
+            button.className = "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex items-center space-x-1";
+          }
+          
+          button.disabled = false;
+          
+          Swal.fire({
+            title: 'Success!',
+            text: `Category has been ${data.isListed ? "shown" : "hidden"}.`,
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false,
+            customClass: {
+              popup: 'rounded-2xl'
+            }
+          });
+        })
+        .catch(error => {
+          console.error(error);
+          currentButton.innerHTML = originalContent;
+          currentButton.disabled = false;
+          
+          Swal.fire({
+            icon: "error",
+            title: "Error!",
+            text: "Could not toggle category status",
+            customClass: {
+              popup: 'rounded-2xl'
+            }
+          });
+        });
+      }
+    });
+  }
+
+  // Animate table rows on load
+  window.addEventListener('load', function() {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach((row, index) => {
+      setTimeout(() => {
+        row.style.opacity = '1';
+        row.style.transform = 'translateY(0)';
+      }, index * 100);
+    });
+  });
+</script>
+
+</body>
+</html>

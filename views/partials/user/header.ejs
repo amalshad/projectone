@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Loading Screen -->
+  <!-- <div class="loading-screen" id="loadingScreen">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Loading ...</p>
+    </div>
+  </div> -->
+
+  <!-- Header -->
+  <header class="header">
+    <!-- Top Bar -->
+    <!-- <div class="top-bar">
+      <div class="container">
+        <div class="top-bar-content">
+          <div class="shipping-info animate-slide-in-left">
+            <i class="fas fa-box"></i>
+            <span>Free Shipping for orders over $50</span>
+          </div>
+          <div class="top-links animate-slide-in-right">
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+            <a href="/help-center">Help Center</a>
+            <a href="tel:123-456-7890">Call Us: 123-456-7890</a>
+          </div>
+        </div>
+      </div>
+    </div> -->
+
+    <!-- Main Header -->
+    <div class="main-header">
+      <div class="container">
+        <div class="header-content">
+          <a href="/" class="logo animate-fade-in">
+            <span class="logo-text">ShadElectro</span>
+            <div class="logo-underline"></div>
+          </a>
+          <!-- <div class="search-bar animate-fade-in-up">
+            <form action="/search" method="GET">
+              <input type="text" name="q" placeholder="Search for products..." class="search-input">
+              <button type="submit" class="search-button">
+                <i class="fas fa-search"></i>
+              </button>
+            </form>
+          </div> -->
+
+          <div class="user-actions animate-slide-in-right">
+            <a href="/wishlist" class="action-link wishlist-link">
+              <i class="fas fa-heart"></i>
+              <span class="action-tooltip">Wishlist</span>
+              <span class="wishlist-count">0</span>
+            </a>
+
+            <a href="/cart" class="action-link cart-link">
+              <i class="fas fa-shopping-cart"></i>
+              <span class="action-tooltip">Cart</span>
+              <span class="cart-count">0</span>
+            </a>
+
+            <% if(user) { %>
+              <div class="dropdown">
+                <a href="#" class="action-link account-link">
+                  <i class="fas fa-user"></i>
+                  <span class="action-tooltip">Account</span>
+                </a>
+                <div class="dropdown-content">
+                  <a href="/profile" class="dropdown-item">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Profile</span>
+                  </a>
+                  <a href="/logout" class="dropdown-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                  </a>
+                </div>
+              </div>
+              <% } else { %>
+                <a href="/login" class="action-link login-link">
+                  <i class="fas fa-sign-in-alt"></i>
+                  <span>Log In</span>
+                </a>
+                <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="main-nav">
+      <div class="container">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <!-- <li><a href="#" class="nav-link"></a></li> -->
+          <li><a href="/shop" class="nav-link">Shop</a></li>
+          <!-- <li><a href="#" class="nav-link"></a></li> -->
+          <li><a href="/contact" class="nav-link">Contact</a></li>
+          <!-- <li><a href="#" class="nav-link"></a></li> -->
+          <li><a href="/about" class="nav-link">About</a></li>
+          <!-- <li><a href="#" class="nav-link"></a></li> -->
+          <li><a href="/help" class="nav-link sale-link">Help</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>

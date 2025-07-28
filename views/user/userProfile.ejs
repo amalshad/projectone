@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - ShadElectro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/user-profile.css">
+</head>
+<body>
+
+  <!-- Header Include -->
+  <%- include("../partials/user/header") %>
+
+  <div class="profile-container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb animate-fade-in-up">
+      <a href="/" class="breadcrumb-link">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </a>
+      <span class="breadcrumb-separator">
+        <i class="fas fa-chevron-right"></i>
+      </span>
+      <span class="breadcrumb-current">Profile</span>
+    </div>
+
+    <div class="profile-layout">
+      <!-- Sidebar Navigation -->
+<%- include("../partials/user/sidebar", { currentPage: 'profile' }) %>
+
+      <!-- Main Content -->
+      <div class="profile-content animate-slide-in-right">
+        <!-- Personal Information Tab -->
+        <div id="personal-info" class="tab-content active">
+          <div class="content-header">
+            <h1 class="content-title">Personal Information</h1>
+            <p class="content-subtitle">Manage your personal details and preferences</p>
+          </div>
+
+          <form class="profile-form" id="personalInfoForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="name" class="form-label">
+                  <i class="fas fa-user"></i>
+                  Name
+                </label>
+                <input type="text" id="name" name="name" value="<%= user.name %>" class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label for="email" class="form-label">
+                  <i class="fas fa-envelope"></i>
+                  Email
+                </label>
+                <input type="email" id="email" name="email" value="<%= user.email %>" class="form-input" disabled>
+              </div>
+
+              <div class="form-group">
+                <label for="phone" class="form-label">
+                  <i class="fas fa-phone"></i>
+                  Phone
+                </label>
+                <input type="tel" id="phone" name="phone" value="<%= user.phone || '' %>" class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label for="dateOfBirth" class="form-label">
+                  <i class="fas fa-calendar"></i>
+                  <p> D&#x2022;O&#x2022;B </p>
+                </label>
+                <input type="date" id="dateOfBirth" name="dateOfBirth" value="<%= user.dateOfBirth ? user.dateOfBirth.toISOString().split('T')[0] : '' %>" class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label for="gender" class="form-label">
+                  <i class="fas fa-venus-mars"></i>
+                  Gender
+                </label>
+                <select id="gender" name="gender" class="form-select">
+                  <option value="">Select Gender</option>
+                  <option value="male" <%= user.gender === 'male' ? 'selected' : '' %>>Male</option>
+                  <option value="female" <%= user.gender === 'female' ? 'selected' : '' %>>Female</option>
+                  <option value="other" <%= user.gender === 'other' ? 'selected' : '' %>>Other</option>
+                  <option value="prefer-not-to-say" <%= user.gender === 'prefer-not-to-say' ? 'selected' : '' %>>Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i>
+                <span>Save Changes</span>
+                <div class="btn-ripple"></div>
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                <i class="fas fa-undo"></i>
+                <span>Reset</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Order History Tab -->
+        <div id="orders" class="tab-content">
+          <div class="content-header">
+            <h1 class="content-title">Order History</h1>
+            <p class="content-subtitle">Track and manage your orders</p>
+          </div>
+
+          <div class="orders-container">
+            <% if (typeof orders !== 'undefined' && orders.length > 0) { %>
+              <% orders.forEach((order, index) => { %>
+                <div class="order-card animate-fade-in-up" style="animation-delay: <%= index * 0.1 %>s">
+                  <div class="order-header">
+                    <div class="order-info">
+                      <h3 class="order-number">Order #<%= order.orderNumber %></h3>
+                      <p class="order-date">Placed on <%= new Date(order.createdAt).toLocaleDateString() %></p>
+                    </div>
+                    <div class="order-status">
+                      <span class="status-badge <%= order.status.toLowerCase() %>">
+                        <i class="fas fa-<%= order.status === 'delivered' ? 'check-circle' : order.status === 'shipped' ? 'truck' : order.status === 'processing' ? 'clock' : 'times-circle' %>"></i>
+                        <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="order-items">
+                    <% order.items.forEach(item => { %>
+                      <div class="order-item">
+                        <img src="/uploads/productImages/<%= item.product.variants[0].productImage[0] %>" alt="<%= item.product.productName %>" class="item-image">
+                        <div class="item-details">
+                          <h4 class="item-name"><%= item.product.productName %></h4>
+                          <p class="item-variant">Variant: <%= item.variant.type %></p>
+                          <p class="item-quantity">Qty: <%= item.quantity %></p>
+                        </div>
+                        <div class="item-price">$<%= (item.price * item.quantity).toFixed(2) %></div>
+                      </div>
+                    <% }) %>
+                  </div>  
+                  <div class="order-footer">
+                    <div class="order-total">
+                      <strong>Total: $<%= order.totalAmount.toFixed(2) %></strong>
+                    </div>
+                    <div class="order-actions">
+                      <button class="btn btn-outline" onclick="viewOrderDetails('<%= order._id %>')">
+                        <i class="fas fa-eye"></i>
+                        View Details
+                      </button>
+                      <% if (order.status === 'delivered') { %>
+                        <button class="btn btn-primary" onclick="reorderItems('<%= order._id %>')">
+                          <i class="fas fa-redo"></i>
+                          Reorder
+                        </button>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <div class="empty-state">
+                <i class="fas fa-shopping-bag"></i>
+                <h3>No Orders Yet</h3>
+                <p>You haven't placed any orders yet. Start shopping to see your order history here.</p>
+                <a href="/shop" class="btn btn-primary">
+                  <i class="fas fa-shopping-cart"></i>
+                  Start Shopping
+                </a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+
+        <!-- Notifications Tab -->
+        <div id="notifications" class="tab-content">
+          <div class="content-header">
+            <h1 class="content-title">Notification Preferences</h1>
+            <p class="content-subtitle">Choose how you want to be notified</p>
+          </div>
+
+          <div class="notification-sections">
+            <div class="notification-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-envelope"></i>
+                  Email Notifications
+                </h3>
+              </div>
+              <div class="notification-options">
+                <div class="notification-option">
+                  <div class="option-info">
+                    <h4>Order Updates</h4>
+                    <p>Get notified about order status changes</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="notification-option">
+                  <div class="option-info">
+                    <h4>Promotional Emails</h4>
+                    <p>Receive special offers and deals</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="notification-option">
+                  <div class="option-info">
+                    <h4>Product Recommendations</h4>
+                    <p>Get personalized product suggestions</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="notification-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-mobile-alt"></i>
+                  Push Notifications
+                </h3>
+              </div>
+              <div class="notification-options">
+                <div class="notification-option">
+                  <div class="option-info">
+                    <h4>Order Shipped</h4>
+                    <p>When your order is shipped</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="notification-option">
+                  <div class="option-info">
+                    <h4>Flash Sales</h4>
+                    <p>Limited time offers and flash sales</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Success Toast -->
+  <div class="toast" id="successToast">
+    <div class="toast-content">
+      <i class="fas fa-check-circle"></i>
+      <span class="toast-message">Changes saved successfully!</span>
+    </div>
+  </div>
+
+  <!-- Footer Include -->
+  <%- include("../partials/user/footer") %>
+
+  <!-- Scripts -->
+  <script>
+    // Global variables
+    let currentTab = 'personal-info';
+
+    // Loading screen
+    window.addEventListener('load', function() {
+      const loadingScreen = document.getElementById('loadingScreen');
+      loadingScreen.style.opacity = '0';
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+      }, 500);
+    });
+
+    // Intersection Observer for animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-visible');
+        }
+      });
+    }, observerOptions);
+
+    // Observe all animated elements
+    document.addEventListener('DOMContentLoaded', function() {
+      const animatedElements = document.querySelectorAll('[class*="animate-"]');
+      animatedElements.forEach(el => observer.observe(el));
+
+      // Initialize tab functionality
+      // initializeTabs();
+    });
+
+    // // Tab functionality
+    // function initializeTabs() {
+    //   const navLinks = document.querySelectorAll('.nav-link');
+    //   const tabContents = document.querySelectorAll('.tab-content');
+
+    //   navLinks.forEach(link => {
+    //     link.addEventListener('click', function(e) {
+    //       e.preventDefault();
+    //       const targetTab = this.getAttribute('data-tab');
+    //       switchTab(targetTab);
+    //     });
+    //   });
+    // }
+
+    // function switchTab(tabId) {
+    //   // Remove active class from all nav links and tab contents
+    //   document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    //   document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    //   // Add active class to current nav link and tab content
+    //   document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+    //   document.getElementById(tabId).classList.add('active');
+
+    //   currentTab = tabId;
+    // }
+
+    // Avatar upload functionality
+    document.getElementById('profileAvatar').addEventListener('click', function() {
+      document.getElementById('avatarInput').click();
+    });
+
+    document.getElementById('avatarInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('profileAvatar').src = e.target.result;
+          showToast('Profile photo updated successfully!');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Form submissions
+   document.getElementById('personalInfoForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+  const payload = {};
+
+  for (let [key, value] of formData.entries()) {
+    payload[key] = value;
+  }
+
+  try {
+    const res = await fetch('/profile', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      showToast('Personal information updated successfully!');
+    } else {
+      showToast(data.message || 'Update failed', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Something went wrong', 'error');
+  }
+});
+
+
+    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      
+      if (newPassword !== confirmPassword) {
+        showToast('Passwords do not match!', 'error');
+        return;
+      }
+      
+      // Add password change logic here
+      showToast('Password updated successfully!');
+      this.reset();
+    });
+
+    
+
+
+    // Utility functions
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('successToast');
+      const messageElement = toast.querySelector('.toast-message');
+      const iconElement = toast.querySelector('i');
+      
+      messageElement.textContent = message;
+      
+      if (type === 'error') {
+        iconElement.className = 'fas fa-exclamation-circle';
+        toast.style.background = '#dc3545';
+      } else {
+        iconElement.className = 'fas fa-check-circle';
+        toast.style.background = '#28a745';
+      }
+      
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function resetForm() {
+      document.getElementById('personalInfoForm').reset();
+      showToast('Form reset successfully!');
+    }
+
+    function viewOrderDetails(orderId) {
+      // Add order details view logic
+      console.log('Viewing order:', orderId);
+    }
+
+    function reorderItems(orderId) {
+      // Add reorder logic
+      showToast('Items added to cart!');
+    }
+
+   
+
+
+
+   
+
+    
+  </script>
+</body>
+</html>

@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - ShadElectro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#8a2be2',
+            'primary-hover': '#7a1dd2',
+            'sale-color': '#dc3545',
+            'success-color': '#28a745',
+          },
+          fontFamily: {
+            'inter': ['Inter', 'sans-serif'],
+          },
+          animation: {
+            'fade-in-up': 'fadeInUp 0.8s ease forwards',
+            'slide-in-left': 'slideInLeft 0.8s ease forwards',
+            'slide-in-right': 'slideInRight 0.8s ease forwards',
+            'pulse-custom': 'pulse 2s infinite',
+            'bounce-custom': 'bounce 0.6s ease',
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(30px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            slideInLeft: {
+              '0%': { opacity: '0', transform: 'translateX(-50px)' },
+              '100%': { opacity: '1', transform: 'translateX(0)' }
+            },
+            slideInRight: {
+              '0%': { opacity: '0', transform: 'translateX(50px)' },
+              '100%': { opacity: '1', transform: 'translateX(0)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="font-inter bg-gray-50 overflow-x-hidden">
+  <!-- Header Include -->
+  <%- include("../partials/user/header") %>
+
+  <div class="max-w-7xl mx-auto px-5 py-6">
+    <!-- Breadcrumb -->
+    <div class="flex items-center space-x-2 text-sm text-gray-600 mb-8 opacity-0 animate-fade-in-up">
+      <a href="/" class="flex items-center space-x-1 hover:text-primary transition-colors duration-300">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </a>
+      <i class="fas fa-chevron-right text-xs text-gray-400"></i>
+      <a href="/cart" class="hover:text-primary transition-colors duration-300">Cart</a>
+      <i class="fas fa-chevron-right text-xs text-gray-400"></i>
+      <span class="text-primary font-medium">Checkout</span>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="mb-8 opacity-0 animate-fade-in-up">
+      <div class="flex items-center justify-center space-x-4 md:space-x-8">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-success-color text-white rounded-full flex items-center justify-center font-bold">
+            <i class="fas fa-check"></i>
+          </div>
+          <span class="ml-2 font-semibold text-success-color">Cart</span>
+        </div>
+        <div class="w-8 md:w-16 h-1 bg-primary rounded"></div>
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold animate-pulse">
+            <i class="fas fa-credit-card"></i>
+          </div>
+          <span class="ml-2 font-semibold text-primary">Checkout</span>
+        </div>
+        <div class="w-8 md:w-16 h-1 bg-gray-300 rounded"></div>
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-gray-300 text-gray-500 rounded-full flex items-center justify-center font-bold">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <span class="ml-2 font-semibold text-gray-500">Complete</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Checkout Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Checkout Form Section -->
+      <div class="lg:col-span-2">
+        <form id="checkoutForm"  class="space-y-6">
+
+          <!-- Shipping Address Selection -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 opacity-0 animate-slide-in-left">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-truck mr-3 text-primary"></i>
+                Select Shipping Address
+              </h2>
+              <button type="button" onclick="openAddressModal('add')" class="text-primary hover:text-primary-hover font-semibold flex items-center">
+                <i class="fas fa-plus mr-2"></i>Add New Address
+              </button>
+            </div>
+
+            <!-- Address Selection -->
+            <% if (addresses?.address?.length > 0) { %>
+              <div class="space-y-4">
+                <!-- Show first 2 addresses initially -->
+                <div id="visibleAddresses">
+                  <% addresses.address.slice(0, 2).forEach((address, index) => { %>
+                    <label class="flex items-start cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20 <%= address.isDefault ? 'border-primary bg-primary/5' : '' %> mb-4">
+                      <input type="radio" name="selectedAddress" value="<%= address._id %>" <%= address.isDefault ? 'checked' : '' %>
+                        class="mt-1 text-primary focus:ring-primary w-5 h-5">
+                      <div class="ml-4 flex-1">
+                        <div class="flex items-center justify-between">
+                          <div>
+                            <div class="font-bold text-gray-900 group-hover:text-primary transition-colors duration-300 flex items-center">
+                              <%= address.title %>
+                              <% if (address.isDefault) { %>
+                                <span class="ml-2 bg-success-color text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                  <i class="fas fa-star mr-1"></i>Default
+                                </span>
+                              <% } %>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">
+                              <% if (address.name) { %><strong><%= address.name %></strong><br><% } %>
+                              <%= address.address %>
+                              <% if (address.landMark) { %>, <%= address.landMark %><% } %><br>
+                              <%= address.city %>, <%= address.state %> <%= address.pinCode %><br>
+                              <%= address.country %>
+                              <% if (address.phone) { %><br><i class="fas fa-phone mr-1"></i><%= address.phone %><% } %>
+                            </div>
+                          </div>
+                          <div class="flex space-x-2">
+                            <button type="button" onclick="openAddressModal('edit', '<%= address._id %>')" 
+                              class="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50 transition-all duration-300">
+                              <i class="fas fa-edit"></i>
+                            </button>
+                            <% if (!address.isDefault) { %>
+                              <button type="button" onclick="deleteAddress('<%= address._id %>')" 
+                                class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-all duration-300">
+                                <i class="fas fa-trash-alt"></i>
+                              </button>
+                            <% } %>
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                  <% }) %>
+                </div>
+
+                <!-- Hidden addresses (show when "Show All" is clicked) -->
+                <% if (addresses.address.length > 2) { %>
+                  <div id="hiddenAddresses" class="hidden space-y-4">
+                    <% addresses.address.slice(2).forEach((address, index) => { %>
+                      <label class="flex items-start cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20 <%= address.isDefault ? 'border-primary bg-primary/5' : '' %>">
+                        <input type="radio" name="selectedAddress" value="<%= address._id %>" <%= address.isDefault ? 'checked' : '' %>
+                          class="mt-1 text-primary focus:ring-primary w-5 h-5">
+                        <div class="ml-4 flex-1">
+                          <div class="flex items-center justify-between">
+                            <div>
+                              <div class="font-bold text-gray-900 group-hover:text-primary transition-colors duration-300 flex items-center">
+                                <%= address.title %>
+                                <% if (address.isDefault) { %>
+                                  <span class="ml-2 bg-success-color text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                    <i class="fas fa-star mr-1"></i>Default
+                                  </span>
+                                <% } %>
+                              </div>
+                              <div class="text-sm text-gray-600 mt-1">
+                                <% if (address.name) { %><strong><%= address.name %></strong><br><% } %>
+                                <%= address.address %>
+                                <% if (address.landMark) { %>, <%= address.landMark %><% } %><br>
+                                <%= address.city %>, <%= address.state %> <%= address.pinCode %><br>
+                                <%= address.country %>
+                                <% if (address.phone) { %><br><i class="fas fa-phone mr-1"></i><%= address.phone %><% } %>
+                              </div>
+                            </div>
+                            <div class="flex space-x-2">
+                              <button type="button" onclick="openAddressModal('edit', '<%= address._id %>')" 
+                                class="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50 transition-all duration-300">
+                                <i class="fas fa-edit"></i>
+                              </button>
+                              <% if (!address.isDefault) { %>
+                                <button type="button" onclick="deleteAddress('<%= address._id %>')" 
+                                  class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-all duration-300">
+                                  <i class="fas fa-trash-alt"></i>
+                                </button>
+                              <% } %>
+                            </div>
+                          </div>
+                        </div>
+                      </label>
+                    <% }) %>
+                  </div>
+
+                  <!-- Show All / Show Less Toggle -->
+                  <div class="flex justify-center mt-4">
+                    <button type="button" id="toggleAddressesBtn" onclick="toggleAllAddresses()" 
+                      class="flex items-center text-primary hover:text-primary-hover font-semibold py-2 px-4 rounded-lg hover:bg-primary/5 transition-all duration-300">
+                      <i class="fas fa-chevron-down mr-2" id="toggleIcon"></i>
+                      <span id="toggleText">Choose Different Address (<%= addresses.address.length-2 %> available)</span>
+                    </button>
+                  </div>
+                <% } %>
+              </div>
+            <% } else { %>
+              <!-- No Addresses State -->
+              <div class="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i class="fas fa-map-marker-alt text-2xl text-primary"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">No Addresses Found</h3>
+                <p class="text-gray-600 mb-4">Add your first address to continue with checkout</p>
+                <button type="button" onclick="openAddressModal('add')" 
+                  class="bg-gradient-to-r from-primary to-primary-hover text-white px-6 py-3 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                  <i class="fas fa-plus mr-2"></i>Add Address
+                </button>
+              </div>
+            <% } %>
+          </div>
+
+          <!-- Shipping Method -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 opacity-0 animate-slide-in-left">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+              <i class="fas fa-shipping-fast mr-3 text-primary"></i>
+              Shipping Method
+            </h2>
+            
+            <div class="space-y-4">
+              <label class="flex items-start cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-0 border-primary">
+                <input type="radio" name="shippingPrice" value="0" checked
+                  class="mt-1 text-primary focus:ring-primary w-5 h-5" onchange="updateCheckoutShipping()">
+                <div class="ml-4 flex-1">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <div class="font-bold text-gray-900 group-hover:text-primary transition-colors duration-300">
+                        Standard Shipping
+                      </div>
+                      <div class="text-sm text-gray-600 font-medium">5-7 business days</div>
+                    </div>
+                    <div class="text-xl font-bold text-success-color">FREE</div>
+                  </div>
+                </div>
+              </label>
+              
+              <label class="flex items-start cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20">
+                <input type="radio" name="shippingPrice" value="119.99"
+                  class="mt-1 text-primary focus:ring-primary w-5 h-5" onchange="updateCheckoutShipping()">
+                <div class="ml-4 flex-1">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <div class="font-bold text-gray-900 group-hover:text-primary transition-colors duration-300">
+                        Express Shipping
+                      </div>
+                      <div class="text-sm text-gray-600 font-medium">2-3 business days</div>
+                    </div>
+                    <div class="text-xl font-bold text-gray-900">₹119.99</div>
+                  </div>
+                </div>
+              </label>
+              
+              <label class="flex items-start cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20">
+                <input type="radio" name="shippingPrice" value="219.99"
+                  class="mt-1 text-primary focus:ring-primary w-5 h-5" onchange="updateCheckoutShipping()">
+                <div class="ml-4 flex-1">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <div class="font-bold text-gray-900 group-hover:text-primary transition-colors duration-300">
+                        Overnight Shipping
+                      </div>
+                      <div class="text-sm text-gray-600 font-medium">Next business day</div>
+                    </div>
+                    <div class="text-xl font-bold text-gray-900">₹219.99</div>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Payment Method -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 opacity-0 animate-slide-in-left">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+              <i class="fas fa-credit-card mr-3 text-primary"></i>
+              Payment Method
+            </h2>
+            
+            <!-- Payment Options -->
+            <div class="space-y-4 mb-6">
+              <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-0 border-primary">
+                <input type="radio" name="paymentMethod" value="card" checked disabled
+                  class="text-primary focus:ring-primary w-5 h-5">
+                <div class="ml-4 flex items-center">
+                  <i class="fas fa-credit-card text-primary text-xl mr-3"></i>
+                  <span class="font-bold text-gray-900">Credit/Debit Card</span>
+                  <div class="ml-4 flex space-x-2">
+                    <i class="fab fa-cc-visa text-2xl text-blue-600"></i>
+                    <i class="fab fa-cc-mastercard text-2xl text-red-600"></i>
+                    <i class="fab fa-cc-amex text-2xl text-blue-500"></i>
+                  </div>
+                </div>
+              </label>
+              
+              <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20">
+                <input type="radio" name="paymentMethod" value="razorpay"
+                  class="text-primary focus:ring-primary w-5 h-5">
+                <div class="ml-4 flex items-center">
+                  <i class="fas fa-mobile-alt text-primary text-xl mr-3"></i>
+                  <span class="font-bold text-gray-900">UPI Payment</span>
+                  <div class="ml-4 flex space-x-2">
+                    <span class="text-xs bg-primary text-white px-2 py-1 rounded">Razorpay</span>
+                    <span class="text-xs bg-primary text-white px-2 py-1 rounded">GPay</span>
+                    <span class="text-xs bg-primary text-white px-2 py-1 rounded">PhonePe</span>
+                  </div>
+                </div>
+              </label>
+              
+              <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20">
+                <input type="radio" name="paymentMethod" value="netbanking"
+                  class="text-primary focus:ring-primary w-5 h-5">
+                <div class="ml-4 flex items-center">
+                  <i class="fas fa-university text-primary text-xl mr-3"></i>
+                  <span class="font-bold text-gray-900">Net Banking</span>
+                </div>
+              </label>
+
+              <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20">
+                <input type="radio" name="paymentMethod" value="cod"
+                  class="text-primary focus:ring-primary w-5 h-5">
+                <div class="ml-4 flex items-center">
+                  <i class="fas fa-money-bill-wave text-primary text-xl mr-3"></i>
+                  <span class="font-bold text-gray-900">Cash on Delivery</span>
+                  <span class="ml-2 text-xs bg-success-color text-white px-2 py-1 rounded">Available</span>
+                </div>
+              </label>
+            </div>
+          </div>
+    <% const subtotal=cart?.items?.reduce((acc, item)=> {
+                  const product = item.productId;
+                  const variant = product.variants[item.variantIndex];
+                  return acc + (variant.salesPrice * item.quantity);
+                  }, 0) || 0; %>
+          <!-- Order Notes -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 opacity-0 animate-slide-in-left">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+              <i class="fas fa-sticky-note mr-3 text-primary"></i>
+              Order Notes (Optional)
+            </h2>
+            <textarea name="orderNotes" rows="4" placeholder="Any special instructions for your order..."
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 resize-none"></textarea>
+          </div>
+          <input type="text" value="<%= subtotal %>" name="subtotal" hidden>
+        </form>
+      </div>
+
+      <!-- Order Summary Sidebar -->
+      <% if (cart?.items?.length > 0) { %>
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6 opacity-0 animate-slide-in-right">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-receipt mr-3 text-primary"></i>
+            Order Summary
+          </h2>
+
+          <!-- Order Items -->
+          <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
+            <% cart.items.forEach((item) => { 
+              const product = item.productId;
+              const variant = product.variants[item.variantIndex];
+            %>
+            <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-xl">
+              <div class="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                <img src="/uploads/productImages/<%= variant.productImage[0] %>" 
+                     alt="<%= product.productName %>" 
+                     class="w-full h-full object-cover">
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-bold text-gray-900 text-sm truncate"><%= product.productName %></h4>
+                <p class="text-gray-600 text-xs"><%= variant.type %></p>
+                <p class="text-sm font-bold text-gray-900">
+                  Qty: <%= item.quantity %> × ₹<%= variant.salesPrice.toFixed(2) %>
+                </p>
+              </div>
+              <div class="text-right">
+                <p class="font-bold text-gray-900">₹<%= (variant.salesPrice*item.quantity).toFixed(2) %></p>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+
+          <!-- Promo Code -->
+          <div class="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-100">
+            <label class="block text-sm font-bold text-gray-700 mb-3">
+              <i class="fas fa-tag mr-2 text-primary"></i>
+              Promo Code
+            </label>
+            <div class="flex gap-2">
+              <input type="text" id="checkoutPromoCode" placeholder="Enter code"
+                class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-medium">
+              <button type="button" onclick="applyCheckoutPromoCode()"
+                class="px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-white rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 font-bold whitespace-nowrap">
+                Apply
+              </button>
+            </div>
+          </div>
+
+          <!-- Price Breakdown -->
+          <div class="space-y-3 mb-6 text-lg">
+          
+            <div class="flex justify-between text-gray-700">
+              <span>Subtotal (<%= cart?.items?.length || 0 %> items)</span>
+              <span class="font-bold" id="checkoutSubtotal">₹<%= subtotal.toFixed(2) %></span>
+            </div>
+            <div class="flex justify-between text-gray-700">
+              <span>Shipping</span>
+              <span class="font-bold text-success-color" id="checkoutShipping">Free</span>
+            </div>
+            <div class="flex justify-between text-success-color" id="checkoutDiscountRow" style="display: none;">
+              <span>Discount</span>
+              <span class="font-bold" id="checkoutDiscountAmount">-₹0.00</span>
+            </div>
+            <hr class="border-gray-300">
+            <div class="flex justify-between text-2xl font-bold text-gray-900">
+              <span>Total</span>
+              <span class="text-primary" id="checkoutFinalTotal">₹<%= subtotal.toFixed(2) %></span>
+            </div>
+          </div>
+
+          <!-- Place Order Button -->
+          <button type="submit" form="checkoutForm"
+            class="w-full bg-gradient-to-r from-primary to-primary-hover text-white py-4 rounded-xl font-bold text-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 mb-6 relative overflow-hidden group">
+            <span class="relative z-10 flex items-center justify-center">
+              <i class="fas fa-lock mr-3"></i>
+              Place Order (₹<span id="orderButtonTotal"><%= subtotal.toFixed(2) %></span>)
+            </span>
+            <div class="absolute inset-0 bg-white/20 transform scale-0 group-hover:scale-100 rounded-full transition-transform duration-500"></div>
+          </button>
+
+          <!-- Security Info -->
+          <div class="text-center text-sm text-gray-600 bg-green-50 p-4 rounded-xl border border-green-200">
+            <div class="flex items-center justify-center gap-2 mb-2">
+              <i class="fas fa-shield-alt text-green-500 text-lg animate-pulse"></i>
+              <span class="font-bold text-green-700">100% Secure Checkout</span>
+            </div>
+            <p class="text-green-600 font-medium">Protected by 256-bit SSL encryption</p>
+          </div>
+        </div>
+      </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Address Modal -->
+  <div id="addressModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 opacity-0 invisible transition-all duration-300">
+    <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-300">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-bold text-gray-900 flex items-center" id="modalTitle">
+            <i class="fas fa-plus text-primary mr-3"></i>Add New Address
+          </h3>
+          <button onclick="closeAddressModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <form id="addressForm" class="p-6">
+        <input type="hidden" id="addressId" name="addressId" value="">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label for="addressTitle" class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-tag text-primary mr-2"></i>Address Title *
+            </label>
+            <input type="text" id="addressTitle" name="title" placeholder="e.g., Home, Office" required
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300">
+          </div>
+
+          <!-- <div class="md:col-span-2">
+            <label for="addressName" class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-user text-primary mr-2"></i>Full Name
+            </label>
+            <input type="text" id="addressName" name="name" 
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300">
+          </div> -->
+          
+          <div class="md:col-span-2">
+            <label for="address" class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-map-marker-alt text-primary mr-2"></i>Street Address *
+            </label>
+            <input type="text" id="address" name="address" required
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300">
+          </div>
+          
+          <div class="md:col-span-2">
+            <label for="landMark" class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-landmark text-primary mr-2"></i>Landmark (Optional)
+            </label>
+            <input type="text" id="landMark" name="landMark"
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300">
+          </div>
+          
+          <div>
+            <label for="city" class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-city text-primary mr-2"></i>City *
+            </label>
+            <input type="text" id="city" name="city" required
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300">
+          </div>
+          
+          <div>
+            <label for="state" class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-map text-primary mr-2"></i>State *
+            </label>
+            <select id="state" name="state" required
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300">
+              <option value="">Select State</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+              <option value="Assam">Assam</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Chhattisgarh">Chhattisgarh</option>
+              <option value="Goa">Goa</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Himachal Pradesh">Himachal Pradesh</option>
+              <option value="Jharkhand">Jharkhand</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Manipur">Manipur</option>
+              <option value="Meghalaya">Meghalaya</option>
+              <option value="Mizoram">Mizoram</option>
+              <option value="Nagaland">Nagaland</option>
+              <option value="Odisha">Odisha</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Sikkim">Sikkim</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Tripura">Tripura</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Uttarakhand">Uttarakhand</option>
+              <option value="West Bengal">West Bengal</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="pinCode" class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-mail-bulk text-primary mr-2"></i>PIN Code *
+            </label>
+            <input type="number" id="pinCode" name="pinCode" requiredmin="100000" max="999999" required oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6)"
+                onkeydown="if(['e','E','+','-'].includes(event.key)) event.preventDefault();"
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300">
+          </div>
+          
+          <div>
+            <label for="country" class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-globe text-primary mr-2"></i>Country *
+            </label>
+            <select id="country" name="country" required
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300">
+              <option value="India">India</option>
+            </select>
+          </div>
+          
+          <div class="md:col-span-2">
+            <label for="phone" class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-phone text-primary mr-2"></i>Phone Number
+            </label>
+            <input type="tel" id="phone" name="phone"  pattern="[0-9]{10}" maxlength="10" min="0" inputmode="numeric"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300">
+          </div>
+          
+          <div class="md:col-span-2 space-y-3">
+            <label class="flex items-center cursor-pointer">
+              <input type="checkbox" id="isDefault" name="isDefault" class="text-primary focus:ring-primary w-5 h-5 rounded">
+              <span class="ml-3 font-semibold text-gray-700">
+                <i class="fas fa-star text-yellow-500 mr-2"></i>Set as default address
+              </span>
+            </label>
+            
+            <label class="flex items-center cursor-pointer">
+              <input type="checkbox" id="isBilling" name="isBilling" class="text-primary focus:ring-primary w-5 h-5 rounded">
+              <span class="ml-3 font-semibold text-gray-700">
+                <i class="fas fa-credit-card text-blue-500 mr-2"></i>Use as billing address
+              </span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+          <button type="button" onclick="closeAddressModal()" 
+            class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-300 font-semibold">
+            Cancel
+          </button>
+          <button type="submit" 
+            class="px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-white rounded-lg hover:shadow-lg transition-all duration-300 font-semibold">
+            <i class="fas fa-save mr-2"></i>
+            <span id="submitBtnText">Save Address</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Success Toast -->
+  <div class="toast fixed top-5 right-5 bg-white rounded-xl shadow-2xl p-4 z-50 transform translate-x-full transition-all duration-300 border-l-4 border-green-500" id="successToast">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+      <div>
+        <div class="toast-message font-bold text-gray-900">Success!</div>
+        <div class="text-sm text-gray-600">Action completed successfully</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Top Button -->
+  <button
+    class="back-to-top fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-primary to-primary-hover text-white rounded-full shadow-xl opacity-0 invisible hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 z-40 group"
+    id="backToTop" onclick="scrollToTop()">
+    <i class="fas fa-arrow-up group-hover:animate-bounce"></i>
+  </button>
+
+  <!-- Footer Include -->
+  <%- include("../partials/user/footer") %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <script>
+    // Global variables for checkout calculations
+    let checkoutDiscount = 0;
+    let checkoutShipping = 0;
+    const subtotalAmount = <%=cart?.items?.reduce((acc, item)=> {
+      const product = item.productId;
+      const variant = product.variants[item.variantIndex];
+      return acc + (variant.salesPrice * item.quantity);
+    }, 0) || 0; %>;
+    
+    let finalTotal = 0
+    document.addEventListener("DOMContentLoaded", () => {
+      // Initialize animations
+      setTimeout(() => {
+        document.querySelectorAll('.opacity-0').forEach((el, index) => {
+          setTimeout(() => {
+            el.classList.remove('opacity-0')
+          }, index * 100)
+        })
+      }, 100)
+
+      // Initialize back to top
+      initializeBackToTop()
+      
+      // Initialize form functionality
+      initializeCheckoutForm()
+    })
+
+    function initializeBackToTop() {
+      const backToTop = document.getElementById("backToTop")
+      window.addEventListener("scroll", () => {
+        if (window.pageYOffset > 300) {
+          backToTop.classList.remove("opacity-0", "invisible")
+        } else {
+          backToTop.classList.add("opacity-0", "invisible")
+        }
+      })
+    }
+
+    function initializeCheckoutForm() {
+      const form = document.getElementById('checkoutForm')
+      form.addEventListener('submit', handleCheckoutSubmit)
+    }
+
+    function toggleAddressBook() {
+      const addressBook = document.getElementById('addressBook')
+      addressBook.classList.toggle('hidden')
+    }
+
+    function updateCheckoutShipping() {
+      const selectedShipping = document.querySelector('input[name="shippingPrice"]:checked')
+      checkoutShipping = parseFloat(selectedShipping.value)
+      
+      const shippingElement = document.getElementById('checkoutShipping')
+      if (checkoutShipping === 0) {
+        shippingElement.textContent = 'Free'
+        shippingElement.className = 'font-bold text-success-color'
+      } else {
+        shippingElement.textContent = `₹${checkoutShipping.toFixed(2)}`
+        shippingElement.className = 'font-bold'
+      }
+      
+      updateCheckoutTotals()
+      showToast('Shipping option updated')
+    }
+
+    function applyCheckoutPromoCode() {
+      const promoInput = document.getElementById('checkoutPromoCode')
+      const promoCode = promoInput.value.trim().toUpperCase()
+      
+      const validCodes = {
+        SAVE10: { discount: 0.1, description: "10% off" },
+        WELCOME20: { discount: 0.2, description: "20% off" },
+        STUDENT15: { discount: 0.15, description: "15% off" },
+        FREESHIP: { discount: 0, description: "Free shipping", freeShipping: true }
+      }
+      
+      if (validCodes[promoCode]) {
+        const code = validCodes[promoCode]
+        
+        if (code.freeShipping) {
+          // Set shipping to free
+          document.querySelector('input[name="shippingPrice"][value="0"]').checked = true
+          checkoutShipping = 0
+          document.getElementById('checkoutShipping').textContent = 'Free'
+          document.getElementById('checkoutShipping').className = 'font-bold text-success-color'
+          showToast(`Promo code applied! ${code.description}`)
+        } else {
+          checkoutDiscount = code.discount
+          showToast(`Promo code applied! ${code.description}`)
+        }
+        
+        promoInput.value = ""
+        promoInput.classList.add("border-green-500", "bg-green-50")
+        
+        updateCheckoutTotals()
+        
+        setTimeout(() => {
+          promoInput.classList.remove("border-green-500", "bg-green-50")
+        }, 3000)
+      } else if (promoCode) {
+        showToast("Invalid promo code", "error")
+        promoInput.classList.add("animate-pulse", "border-red-500", "bg-red-50")
+        
+        setTimeout(() => {
+          promoInput.classList.remove("animate-pulse", "border-red-500", "bg-red-50")
+        }, 1000)
+      }
+    }
+
+    function updateCheckoutTotals() {
+      // Calculate discount
+      const discountAmount = subtotalAmount * checkoutDiscount
+      
+      // Calculate final total
+      finalTotal = subtotalAmount - discountAmount + checkoutShipping
+      
+      // Update UI elements
+      document.getElementById('checkoutFinalTotal').textContent = `₹${finalTotal.toFixed(2)}`
+      document.getElementById('orderButtonTotal').textContent = finalTotal.toFixed(2)
+      
+      // Show/hide discount row
+      const discountRow = document.getElementById('checkoutDiscountRow')
+      const discountAmountElement = document.getElementById('checkoutDiscountAmount')
+      
+      if (discountAmount > 0) {
+        discountRow.style.display = 'flex'
+        discountAmountElement.textContent = `-₹${discountAmount.toFixed(2)}`
+      } else {
+        discountRow.style.display = 'none'
+      }
+    }
+
+function handleCheckoutSubmit(e) {
+  e.preventDefault()
+  updateCheckoutTotals()
+
+  const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
+  if (!selectedAddress) return showToast('Please select a shipping address', 'error');
+
+  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+  const formData = new FormData(e.target);
+  const finalAmount = parseFloat(finalTotal);
+
+  formData.append('selectedAddressId', selectedAddress.value);
+  console.log(finalAmount)
+
+  if (paymentMethod === 'razorpay') {
+    fetch('/create-razorpay-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: finalAmount})
+    })
+    .then(res => res.json())
+    .then(({ order }) => {
+      const options = {
+        key: "<%= process.env.RAZORPAY_KEY_ID %>",
+        amount: order.amount,
+        currency: "INR",
+        name: "ShadElectro",
+        description: "UPI Payment",
+        order_id: order.id,
+        handler: function (response) {
+          // Payment success handler
+          formData.append("razorpay_payment_id", response.razorpay_payment_id);
+          formData.append("razorpay_order_id", response.razorpay_order_id);
+          formData.append("razorpay_signature", response.razorpay_signature);
+          // formData.append("paymentMethod", "razorpay");
+
+          fetch('/placeOrder', {
+            method: 'POST',
+            body: formData
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              window.location.href = `/order-success/${data.orderId}`;
+            } else {
+              showToast(data.message || "Order failed", "error");
+            }
+          });
+        },
+        prefill:{
+          phone:"<%=user.phone%>",
+          email:"<%=user.email%>"
+        },
+        theme: {
+          color: "#8a2be2"
+        }
+      };
+      const rzp = new Razorpay(options);
+      rzp.open();
+    })
+    .catch(err => {
+      console.error(err);
+      showToast("Razorpay initiation failed", "error");
+    });
+  } else {
+    // Regular flow for COD or other payment methods
+    fetch('/placeOrder', {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = `/order-success/${data.orderId}`;
+      } else {
+        showToast(data.message || 'Order placement failed', 'error');
+      }
+    })
+    .catch(err => {
+      console.error('Error:', err);
+      showToast('Order placement failed', 'error');
+    });
+  }
+}
+
+
+    function showToast(message, type = "success") {
+      const toast = document.getElementById("successToast")
+      const messageElement = toast.querySelector(".toast-message")
+      const icon = toast.querySelector("i")
+      
+      messageElement.textContent = type === "success" ? "Success!" : "Error!"
+      toast.querySelector(".text-gray-600").textContent = message
+      
+      if (type === "error") {
+        icon.className = "fas fa-exclamation-circle text-red-500 text-2xl"
+        toast.classList.remove("border-green-500")
+        toast.classList.add("border-red-500")
+      } else {
+        icon.className = "fas fa-check-circle text-green-500 text-2xl"
+        toast.classList.remove("border-red-500")
+        toast.classList.add("border-green-500")
+      }
+      
+      toast.classList.remove("translate-x-full")
+      
+      setTimeout(() => {
+        toast.classList.add("translate-x-full")
+      }, 3000)
+    }
+
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      })
+    }
+
+    // Address management variables
+    let currentAddressId = null;
+    let modalMode = 'add';
+    const allAddresses = <%- JSON.stringify(addresses?.address || []) %>;
+
+    // Address Modal Functions
+    function openAddressModal(mode, addressId = null) {
+      const modal = document.getElementById('addressModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const submitBtnText = document.getElementById('submitBtnText');
+      const form = document.getElementById('addressForm');
+      
+      modalMode = mode;
+      currentAddressId = addressId;
+      form.reset();
+      
+      if (mode === 'edit' && addressId) {
+        modalTitle.innerHTML = '<i class="fas fa-edit text-blue-500 mr-3"></i>Edit Address';
+        submitBtnText.textContent = 'Update Address';
+        
+        const address = allAddresses.find(addr => addr._id === addressId);
+        if (address) {
+          document.getElementById('addressId').value = addressId;
+          document.getElementById('addressTitle').value = address.title || '';
+          document.getElementById('address').value = address.address || '';
+          document.getElementById('landMark').value = address.landMark || '';
+          document.getElementById('city').value = address.city || '';
+          document.getElementById('state').value = address.state || '';
+          document.getElementById('pinCode').value = address.pinCode || '';
+          document.getElementById('country').value = address.country || 'India';
+          document.getElementById('phone').value = address.phone || '';
+          document.getElementById('isDefault').checked = !!address.isDefault;
+          document.getElementById('isBilling').checked = !!address.isBilling;
+        }
+      } else {
+        modalTitle.innerHTML = '<i class="fas fa-plus text-primary mr-3"></i>Add New Address';
+        submitBtnText.textContent = 'Save Address';
+        document.getElementById('addressId').value = '';
+      }
+      
+      modal.classList.remove('opacity-0', 'invisible');
+      modal.querySelector('.bg-white').classList.remove('scale-95');
+      modal.querySelector('.bg-white').classList.add('scale-100');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeAddressModal() {
+      const modal = document.getElementById('addressModal');
+      modal.classList.add('opacity-0', 'invisible');
+      modal.querySelector('.bg-white').classList.remove('scale-100');
+      modal.querySelector('.bg-white').classList.add('scale-95');
+      document.body.style.overflow = 'auto';
+    }
+
+    // Address form submission
+    document.getElementById('addressForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const data = {};
+      
+      for (const [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+      
+      data.isDefault = this.querySelector('#isDefault').checked;
+      data.isBilling = this.querySelector('#isBilling').checked;
+      
+      const isEdit = modalMode === 'edit' && currentAddressId;
+      const url = isEdit ? `/address/${currentAddressId}` : '/address';
+      const method = isEdit ? 'PATCH' : 'POST';
+      
+      fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showToast(isEdit ? 'Address updated successfully!' : 'Address added successfully!');
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          showToast(data.message || 'Something went wrong.', 'error');
+        }
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        showToast('Failed to save address.', 'error');
+      })
+      .finally(() => {
+        closeAddressModal();
+      });
+    });
+
+    function deleteAddress(addressId) {
+      if (!confirm('Are you sure you want to delete this address?')) return;
+      
+      fetch(`/address/${addressId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showToast('Address deleted successfully!');
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          showToast(data.message || 'Failed to delete address.', 'error');
+        }
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        showToast('Something went wrong while deleting the address.', 'error');
+      });
+    }
+
+    // Close modal on outside click
+    document.getElementById('addressModal').addEventListener('click', function(e) {
+      if (e.target === this) closeAddressModal();
+    });
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeAddressModal();
+    });
+
+    // Toggle show all addresses functionality
+    function toggleAllAddresses() {
+      const hiddenAddresses = document.getElementById('hiddenAddresses');
+      const toggleBtn = document.getElementById('toggleAddressesBtn');
+      const toggleIcon = document.getElementById('toggleIcon');
+      const toggleText = document.getElementById('toggleText');
+      const totalAddresses = <%= addresses?.address?.length-2 || 0 %>;
+      
+      if (hiddenAddresses.classList.contains('hidden')) {
+        // Show all addresses
+        hiddenAddresses.classList.remove('hidden');
+        toggleIcon.className = 'fas fa-chevron-up mr-2';
+        toggleText.textContent = 'Show Less';
+        
+        // Add smooth animation
+        hiddenAddresses.style.opacity = '0';
+        hiddenAddresses.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+          hiddenAddresses.style.transition = 'all 0.3s ease';
+          hiddenAddresses.style.opacity = '1';
+          hiddenAddresses.style.transform = 'translateY(0)';
+        }, 10);
+      } else {
+        // Hide additional addresses
+        hiddenAddresses.style.transition = 'all 0.3s ease';
+        hiddenAddresses.style.opacity = '0';
+        hiddenAddresses.style.transform = 'translateY(-10px)';
+        
+        setTimeout(() => {
+          hiddenAddresses.classList.add('hidden');
+          toggleIcon.className = 'fas fa-chevron-down mr-2';
+          toggleText.textContent = `Choose Different Address (${totalAddresses} available)`;
+        }, 300);
+      }
+    }
+  </script>
+</body>
+
+</html>

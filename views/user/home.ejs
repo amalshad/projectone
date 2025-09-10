@@ -44,8 +44,8 @@
         <div class="product-grid" id="productGrid">
           <% products.forEach((product, index)=> { %>
             <div class="product-card animate-fade-in-up" style="animation-delay: <%= index * 0.1 %>s">
-              <% const variant=product.variants && product.variants[0]; const hasSale=variant && variant.salesPrice &&
-                variant.regularPrice && variant.salesPrice < variant.regularPrice; %>
+              <% const variant=product.variants && product.variants[0]; 
+              const hasSale=variant && variant.salesPrice && variant.regularPrice && variant.salesPrice < variant.regularPrice; %>
 
                 <% if (hasSale) { %>
                   <div class="sale-badge pulse-animation">SALE</div>
@@ -68,11 +68,11 @@
                         </h3>
                         <div class="product-price">
                           <% if (variant) { %>
-                            <% if (variant.salesPrice && variant.regularPrice) { %>
-                              <span class="current-price">₹<%= variant.salesPrice.toFixed(2) %></span>
-                              <span class="original-price">₹<%= variant.regularPrice.toFixed(2) %></span>
-                              <% } else if (variant.regularPrice) { %>
-                                <span class="current-price">₹<%= variant.regularPrice.toFixed(2) %></span>
+                            <% if (variant.finalPrice) { %>
+                              <span class="current-price">₹<%= variant.finalPrice.toFixed(2) %></span>
+                              <span class="original-price">₹<%= variant.salesPrice.toFixed(2) %></span>
+                              <% } else if (variant.salesPrice) { %>
+                                <span class="current-price">₹<%= variant.salesPrice.toFixed(2) %></span>
                                 <% } else { %>
                                   <span class="current-price">₹0.00</span>
                                   <% } %>

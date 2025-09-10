@@ -16,28 +16,28 @@ const loadOrders = async (req, res) => {
     const limit = 5;
     const paymentStatus = req.query.paymentStatus || '';
 
-let userIds = [];
-if (search) {
-  const users = await User.find({ name: { $regex: search, $options: 'i' } }, '_id');
-  userIds = users.map(u => u._id);
-}
+    let userIds = [];
+    if (search) {
+      const users = await User.find({ name: { $regex: search, $options: 'i' } }, '_id');
+      userIds = users.map(u => u._id);
+    }
 
-const query = {};
+    const query = {};
 
-if (search) {
-  query.$or = [
-    { orderId: { $regex: search, $options: 'i' } },
-    { userId: { $in: userIds } }
-  ];
-}
+    if (search) {
+      query.$or = [
+        { orderId: { $regex: search, $options: 'i' } },
+        { userId: { $in: userIds } }
+      ];
+    }
 
-if (status) {
-  query.status = status;
-}
+    if (status) {
+      query.status = status;
+    }
 
-if (paymentStatus) {
-  query.paymentStatus = paymentStatus;
-}
+    if (paymentStatus) {
+      query.paymentStatus = paymentStatus;
+    }
 
 
     const orders = await Order.find(query)
@@ -100,17 +100,22 @@ const updateOrderStatus = async (req, res) => {
     const order = await Order.findById(id);
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
+  
+
+
     if (status === "Returned") {
       const userId = order.userId;
       const refundAmount = order.finalAmount;
 
+      //-----wallet
       let wallet = await Wallet.findOne({ userId });
 
       const transaction = {
         direction: "Credit",
         amount: refundAmount,
         description: `Refund for returned order ${order.orderId}`,
-        orderId: order._id
+        orderId: order._id,
+        paymentMethod: "Refunded"
       };
 
       if (wallet) {
@@ -119,25 +124,33 @@ const updateOrderStatus = async (req, res) => {
         wallet.transaction.push(transaction);
         await wallet.save();
 
-      } 
+      }
       else {
 
         wallet = new Wallet({
           userId,
           balance: refundAmount,
           transaction: [transaction]
+
         });
         await wallet.save();
 
       }
     }
 
+    //--- Status
     order.status = status;
 
     order.orderedItems.forEach(item => {
       if (item.status !== 'Returned' && item.status !== 'Cancelled') {
         item.status = status;
-      }});
+      }
+    });
+
+    if (status == "Delivered" && order.paymentMethod == "cod") {
+      order.paymentStatus = "Paid"
+    }
+
 
     await order.save();
     res.json({ success: true, message: "Order status updated" });
@@ -165,9 +178,11 @@ const updateItemStatus = async (req, res) => {
     if (!item) return res.status(400).json({ success: false, message: "Invalid item index" });
 
     item.status = status;
+    if (status == "Delivered" && order.paymentMethod == "cod") {
+      order.paymentStatus = "Paid"
+    }
 
-
-    if (status === "Returned" ||status ==='Return Accepted') {
+    if (status === "Returned" || status === 'Return Accepted') {
       const amount = item.price * item.quantity;
       let wallet = await Wallet.findOne({ userId });
 
@@ -183,7 +198,7 @@ const updateItemStatus = async (req, res) => {
         wallet.transaction.push(transaction);
         await wallet.save();
 
-      } 
+      }
       else {
         wallet = new Wallet({
           userId,

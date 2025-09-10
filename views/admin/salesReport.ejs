@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Report - ShadElectro Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8a2be2',
+                        'primary-hover': '#7a1dd2'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <%- include("../../views/partials/admin/header") %>
+
+    <main class="flex-1 overflow-auto p-8">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Sales Report 📊</h1>
+                    <p class="text-gray-600">Comprehensive sales analytics with filters and insights</p>
+                </div>
+                
+                <!-- Export Button -->
+                <button onclick="exportReport()" 
+                    class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-all duration-300 hover:shadow-lg flex items-center gap-2">
+                    <i class="fas fa-download"></i>
+                    Export Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-filter text-primary mr-3"></i>
+                Report Filters
+            </h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+                <!-- Period Filter -->
+                <div class="lg:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Time Period</label>
+                    <div class="flex bg-gray-100 rounded-xl p-1">
+                        <button id="dailyBtn" onclick="changePeriod('daily')" 
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 <%= period === 'daily' ? 'bg-primary text-white' : 'text-gray-600 hover:text-primary' %>">
+                            Daily
+                        </button>
+                        <button id="weeklyBtn" onclick="changePeriod('weekly')" 
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 <%= period === 'weekly' ? 'bg-primary text-white' : 'text-gray-600 hover:text-primary' %>">
+                            Weekly
+                        </button>
+                        <button id="monthlyBtn" onclick="changePeriod('monthly')" 
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 <%= period === 'monthly' ? 'bg-primary text-white' : 'text-gray-600 hover:text-primary' %>">
+                            Monthly
+                        </button>
+                        <button id="yearlyBtn" onclick="changePeriod('yearly')" 
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 <%= period === 'yearly' ? 'bg-primary text-white' : 'text-gray-600 hover:text-primary' %>">
+                            Yearly
+                        </button>
+                        <button id="customBtn" onclick="changePeriod('custom')" 
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 <%= period === 'custom' ? 'bg-primary text-white' : 'text-gray-600 hover:text-primary' %>">
+                            Custom
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom Date Range -->
+                <div id="customDateRange" class="lg:col-span-6 <%= period !== 'custom' ? 'hidden' : '' %>">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                            <input type="text" id="startDate" value="<%= startDate %>" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+                            <input type="text" id="endDate" value="<%= endDate %>" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Range Type -->
+                <div id="customRangeType" class="lg:col-span-2 <%= period !== 'custom' ? 'hidden' : '' %>">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Range Type</label>
+                    <select id="customRange" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option value="day" <%= customRange === 'day' ? 'selected' : '' %>>Day</option>
+                        <option value="week" <%= customRange === 'week' ? 'selected' : '' %>>Week</option>
+                        <option value="month" <%= customRange === 'month' ? 'selected' : '' %>>Month</option>
+                    </select>
+                </div>
+
+                <!-- Apply Button -->
+                <div class="lg:col-span-1">
+                    <button onclick="applyFilters()" 
+                        class="w-full bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary-hover transition-all duration-300">
+                        Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Metrics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Orders -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-shopping-cart text-white text-lg"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-medium mb-1">Total Orders</p>
+                    <h3 class="text-2xl font-bold text-gray-900" id="totalOrdersMetric"><%= overallMetrics.totalOrders.toLocaleString('en-IN') %></h3>
+                    <p class="text-xs text-gray-500 mt-1">Order count</p>
+                </div>
+            </div>
+
+            <!-- Total Revenue -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-rupee-sign text-white text-lg"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-medium mb-1">Total Revenue</p>
+                    <h3 class="text-2xl font-bold text-gray-900" id="totalRevenueMetric">₹<%= overallMetrics.totalRevenue.toLocaleString('en-IN') %></h3>
+                    <p class="text-xs text-gray-500 mt-1">Gross revenue</p>
+                </div>
+            </div>
+
+            <!-- Total Discount -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-percentage text-white text-lg"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-medium mb-1">Total Discounts</p>
+                    <h3 class="text-2xl font-bold text-gray-900" id="totalDiscountMetric">₹<%= overallMetrics.totalDiscount.toLocaleString('en-IN') %></h3>
+                    <p class="text-xs text-gray-500 mt-1">Coupons & discounts</p>
+                </div>
+            </div>
+
+            <!-- Net Revenue -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-line text-white text-lg"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-medium mb-1">Net Revenue</p>
+                    <h3 class="text-2xl font-bold text-gray-900" id="netRevenueMetric">₹<%= overallMetrics.netRevenue.toLocaleString('en-IN') %></h3>
+                    <p class="text-xs text-gray-500 mt-1">After discounts</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Sales Chart -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-chart-area text-primary mr-3"></i>
+                    Sales Trend
+                </h3>
+                <div class="h-80">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Discount Analysis -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-pie-chart text-orange-500 mr-3"></i>
+                    Revenue Breakdown
+                </h3>
+                <div class="h-80">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Metrics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Quick Stats -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Stats</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Average Order Value</span>
+                        <span class="font-bold text-gray-900">₹<%= overallMetrics.averageOrderValue.toFixed(2) %></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Coupon Usage</span>
+                        <span class="font-bold text-gray-900"><%= overallMetrics.couponUsage %> orders</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Coupon Usage Rate</span>
+                        <span class="font-bold text-gray-900"><%= overallMetrics.couponUsageRate %>%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Total Shipping</span>
+                        <span class="font-bold text-gray-900">₹<%= overallMetrics.totalShipping.toLocaleString('en-IN') %></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Products -->
+            <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Top Selling Products</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-2 text-sm font-semibold text-gray-600">Product</th>
+                                <th class="text-right py-2 text-sm font-semibold text-gray-600">Quantity</th>
+                                <th class="text-right py-2 text-sm font-semibold text-gray-600">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (topProducts && topProducts.length > 0) { %>
+                                <% topProducts.slice(0, 5).forEach((product) => { %>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-3 text-sm font-medium text-gray-900"><%= product.productName %></td>
+                                        <td class="py-3 text-sm text-gray-600 text-right"><%= product.totalQuantity %></td>
+                                        <td class="py-3 text-sm font-bold text-green-600 text-right">₹<%= product.totalRevenue.toLocaleString('en-IN') %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="3" class="py-4 text-center text-gray-500">No products found</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Sales Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-table text-primary mr-3"></i>
+                        Detailed Sales Data
+                    </h3>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-500">Showing <%= salesData.length %> orders</span>
+                        <button onclick="exportTableData()" class="text-primary hover:text-primary-hover font-medium text-sm">
+                            <i class="fas fa-download mr-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Order ID</th>
+                            <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Customer</th>
+                            <th class="text-left py-4 px-6 text-sm font-semibold text-gray-600">Date</th>
+                            <th class="text-right py-4 px-6 text-sm font-semibold text-gray-600">Amount</th>
+                            <th class="text-right py-4 px-6 text-sm font-semibold text-gray-600">Discount</th>
+                            <th class="text-right py-4 px-6 text-sm font-semibold text-gray-600">Final Amount</th>
+                            <th class="text-center py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTableBody">
+                        <% if (salesData && salesData.length > 0) { %>
+                            <% salesData.forEach((order) => { %>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-4 px-6 text-sm font-medium text-gray-900">
+                                        #<%= order._id.toString().slice(-8).toUpperCase() %>
+                                    </td>
+                                    <td class="py-4 px-6 text-sm text-gray-600">
+                                        <div>
+                                            <div class="font-medium"><%= order.customerName || 'Guest' %></div>
+                                            <div class="text-xs text-gray-500"><%= order.customerEmail || 'N/A' %></div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 text-sm text-gray-600">
+                                        <%= order.orderDate.toLocaleDateString('en-IN') %>
+                                    </td>
+                                    <td class="py-4 px-6 text-sm font-medium text-gray-900 text-right">
+                                        ₹<%= order.totalAmount.toLocaleString('en-IN') %>
+                                    </td>
+                                    <td class="py-4 px-6 text-sm font-medium text-red-600 text-right">
+                                        <% if (order.discount > 0) { %>
+                                            -₹<%= order.discount.toLocaleString('en-IN') %>
+                                            <% if (order.couponCode) { %>
+                                                <div class="text-xs text-gray-500">(<%= order.couponCode %>)</div>
+                                            <% } %>
+                                        <% } else { %>
+                                            -
+                                        <% } %>
+                                    </td>
+                                    <td class="py-4 px-6 text-sm font-bold text-green-600 text-right">
+                                        ₹<%= order.finalAmount.toLocaleString('en-IN') %>
+                                    </td>
+                                    <td class="py-4 px-6 text-center">
+                                        <% 
+                                            let statusClass = 'bg-gray-100 text-gray-800';
+                                            let statusText = order.status || 'Processing';
+                                            if (statusText.toLowerCase() === 'delivered') {
+                                                statusClass = 'bg-green-100 text-green-800';
+                                            } else if (statusText.toLowerCase() === 'shipped') {
+                                                statusClass = 'bg-blue-100 text-blue-800';
+                                            } else if (statusText.toLowerCase() === 'processing') {
+                                                statusClass = 'bg-yellow-100 text-yellow-800';
+                                            }
+                                        %>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <%= statusClass %>">
+                                            <%= statusText %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-gray-500">
+                                    <i class="fas fa-shopping-cart text-3xl mb-3"></i>
+                                    <p>No sales data found for the selected period</p>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300">
+        <div class="bg-white rounded-xl shadow-2xl border border-gray-200 p-4 flex items-center space-x-3 min-w-[300px]">
+            <div id="toastIcon" class="flex-shrink-0"></div>
+            <div class="flex-1">
+                <p id="toastMessage" class="text-sm font-semibold text-gray-900"></p>
+            </div>
+            <button id="closeToast" class="flex-shrink-0 text-gray-400 hover:text-gray-600 p-1">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let salesChart;
+        let revenueChart;
+        let currentPeriod = '<%= period %>';
+        
+        // Initialize everything on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDatePickers();
+            initializeCharts();
+            setupEventListeners();
+        });
+
+        // Initialize date pickers
+        function initializeDatePickers() {
+            flatpickr("#startDate", {
+                dateFormat: "Y-m-d",
+                maxDate: "today"
+            });
+            
+            flatpickr("#endDate", {
+                dateFormat: "Y-m-d",
+                maxDate: "today"
+            });
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Sales Chart
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            const chartData = <%- JSON.stringify(chartData) %>;
+            
+            salesChart = new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map((item, index) => `Period ${item._id}`),
+                    datasets: [{
+                        label: 'Sales (₹)',
+                        data: chartData.map(item => item.totalSales),
+                        borderColor: '#8a2be2',
+                        backgroundColor: 'rgba(138, 43, 226, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Orders',
+                        data: chartData.map(item => item.totalOrders),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString('en-IN');
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        },
+                    }
+                }
+            });
+
+            // Revenue Breakdown Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            const overallMetrics = <%- JSON.stringify(overallMetrics) %>;
+            
+            revenueChart = new Chart(revenueCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Net Revenue', 'Discounts', 'Shipping'],
+                    datasets: [{
+                        data: [
+                            overallMetrics.netRevenue,
+                            overallMetrics.totalDiscount,
+                            overallMetrics.totalShipping
+                        ],
+                        backgroundColor: [
+                            '#8a2be2',
+                            '#ef4444',
+                            '#10b981'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ₹' + context.parsed.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('closeToast').addEventListener('click', hideToast);
+        }
+
+        // Change period filter
+        function changePeriod(period) {
+            currentPeriod = period;
+            
+            // Update button states
+            document.querySelectorAll('#dailyBtn, #weeklyBtn, #monthlyBtn, #yearlyBtn, #customBtn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('text-gray-600', 'hover:text-primary');
+            });
+            
+            document.getElementById(period + 'Btn').classList.add('bg-primary', 'text-white');
+            document.getElementById(period + 'Btn').classList.remove('text-gray-600', 'hover:text-primary');
+            
+            // Show/hide custom date range
+            const customDateRange = document.getElementById('customDateRange');
+            const customRangeType = document.getElementById('customRangeType');
+            
+            if (period === 'custom') {
+                customDateRange.classList.remove('hidden');
+                customRangeType.classList.remove('hidden');
+            } else {
+                customDateRange.classList.add('hidden');
+                customRangeType.classList.add('hidden');
+                applyFilters(); // Auto-apply for non-custom periods
+            }
+        }
+
+        // Apply filters
+        async function applyFilters() {
+            try {
+                showToast('Loading sales data...', 'info');
+                
+                const params = new URLSearchParams({
+                    period: currentPeriod
+                });
+                
+                if (currentPeriod === 'custom') {
+                    const startDate = document.getElementById('startDate').value;
+                    const endDate = document.getElementById('endDate').value;
+                    const customRange = document.getElementById('customRange').value;
+                    
+                    if (!startDate || !endDate) {
+                        showToast('Please select both start and end dates', 'error');
+                        return;
+                    }
+                    
+                    params.append('startDate', startDate);
+                    params.append('endDate', endDate);
+                    params.append('customRange', customRange);
+                }
+                
+                // Redirect to reload with new filters
+                window.location.href = `/admin/sales-report?${params.toString()}`;
+                
+            } catch (error) {
+                console.error('Error applying filters:', error);
+                showToast('Failed to apply filters', 'error');
+            }
+        }
+
+        // Export functions
+        async function exportReport() {
+            try {
+                showToast('Generating report...', 'info');
+                
+                const params = new URLSearchParams(window.location.search);
+                params.append('export', 'true');
+                
+                const response = await fetch(`/admin/sales-report/export?${params.toString()}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `sales-report-${currentPeriod}-${Date.now()}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showToast('Report exported successfully!', 'success');
+                } else {
+                    throw new Error('Export failed');
+                }
+            } catch (error) {
+                console.error('Export error:', error);
+                showToast('Failed to export report', 'error');
+            }
+        }
+
+        function exportTableData() {
+            // Simple CSV export of table data
+            const table = document.querySelector('table');
+            let csv = '';
+            
+            // Get headers
+            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+            csv += headers.join(',') + '\n';
+            
+            // Get data rows
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('td')).map(td => {
+                    return '"' + td.textContent.trim().replace(/"/g, '""') + '"';
+                });
+                if (cells.length > 0) {
+                    csv += cells.join(',') + '\n';
+                }
+            });
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sales-data-${currentPeriod}-${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showToast('Data exported successfully!', 'success');
+        }
+
+        // Toast functions
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const messageEl = document.getElementById('toastMessage');
+
+            const icons = {
+                success: '<div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-check text-green-600"></i></div>',
+                error: '<div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center"><i class="fas fa-exclamation-circle text-red-600"></i></div>',
+                info: '<div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-info-circle text-blue-600"></i></div>'
+            };
+
+            icon.innerHTML = icons[type] || icons.success;
+            messageEl.textContent = message;
+            
+            toast.classList.remove('translate-x-full');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 4000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast').classList.add('translate-x-full');
+        }
+    </script>
+</body>
+</html>

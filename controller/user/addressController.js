@@ -5,7 +5,7 @@ const Product = require("../../models/productSchema")
 
 const loadAddress = async (req, res) => {
     try {
-        const id= req.session.passport?.user || req.session.user
+        const id = req.session.passport?.user || req.session.user
 
 
 
@@ -13,12 +13,12 @@ const loadAddress = async (req, res) => {
 
         const addresses = await Address.findOne({ userId: id })
         const categories = await Category.find()
-// console.log(addresses);
+        // console.log(addresses);
 
         res.render("userAddress", {
             title: "Shad Electro",
             user,
-            addresses:addresses||{address:[]},
+            addresses: addresses || { address: [] },
             categories
         })
 
@@ -33,15 +33,15 @@ const loadAddress = async (req, res) => {
 const addAddress = async (req, res) => {
     try {
 
+        const userId = req.session.passport?.user || req.session.user;
 
-        const { title, name, address, landMark, city, state, pinCode, country, phone, addressType = "shipping", isDefault,
+        const { addressTitle, name, address, landMark, city, state, pinCode, country, phone, addressType = "shipping", isDefault,
             isBilling, } = req.body
 
-        const userId =  req.session.passport?.user || req.session.user;
         const adr = {
             addressType,
             address,
-            title,
+            addressTitle,
             landMark,
             city,
             country,
@@ -52,7 +52,7 @@ const addAddress = async (req, res) => {
             isBilling: isBilling || false,
         }
 
-        const saveAddress = await Address.findOneAndUpdate({ userId }, { $push: { address: adr } }, { upsert: true,new:true })
+        const saveAddress = await Address.findOneAndUpdate({ userId }, { $push: { address: adr } }, { upsert: true, new: true })
 
 
         if (!saveAddress) return res.json({ success: false, message: 'Failed to save address' });
@@ -71,7 +71,7 @@ const addAddress = async (req, res) => {
 const editAddress = async (req, res) => {
     try {
         const { id } = req.params
-        const userId =  req.session.passport?.user || req.session.user
+        const userId = req.session.passport?.user || req.session.user
         const { title, address, landMark, city, state, pinCode, phone, addressType } = req.body
         const saveAddress = await Address.findOne({ userId });
 
@@ -101,7 +101,7 @@ const editAddress = async (req, res) => {
 const deleteAddress = async (req, res) => {
     try {
         const { id } = req.params
-        const userId =  req.session.passport?.user || req.session.user
+        const userId = req.session.passport?.user || req.session.user
         await Address.updateOne({ userId }, { $pull: { address: { _id: id } } });
 
         res.json({ success: true, message: "Address deleted successfully" });

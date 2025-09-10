@@ -60,7 +60,6 @@ const addProduct = async (req, res) => {
     const productExists = await Product.findOne({ productName: { $regex: products.name, $options: "i" } });
 
 
-
     if (typeof products.variants === 'string') {
       products.variants = JSON.parse(products.variants);
     }
@@ -81,10 +80,6 @@ const addProduct = async (req, res) => {
         productImage: []
       }));
 
-
-    //  console.log("Qauntity",typeof products.variants.quantity);
-    //       console.log("sPrice",typeof products.variants.salesPrice);
-    //       console.log("rPrice",typeof products.variants.regularPrice);
 
     if (!productExists) {
 
@@ -135,7 +130,7 @@ const addProduct = async (req, res) => {
       await newProduct.save();
 
 
-      return res.redirect("/admin/product");
+      res.json({success:false,message:"Product has been added successfully."})
 
     } else {
       return res.status(400).json({success:false,message:"Product already exists, please try with another name"});
@@ -189,6 +184,7 @@ const editProduct = async (req, res) => {
   try {
     const id = req.params.id
     const products = req.body;
+    
 
     const exist = await Product.findOne({ _id: id })
 
@@ -234,7 +230,6 @@ const editProduct = async (req, res) => {
       }
     }
 
-    console.log("Product Updated");
 
     await Product.findByIdAndUpdate(id, {
       productName: products.name,
@@ -242,6 +237,9 @@ const editProduct = async (req, res) => {
       category: products.category,
       variants: products.variants
     });
+    
+    console.log("Product Updated");
+
     return res.redirect("/admin/product");
   } catch (error) {
     console.error("Error at productEditing", error)

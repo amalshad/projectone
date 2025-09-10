@@ -1,87 +1,88 @@
 const express = require('express');
-const userController = require('../controller/user/userController');
-const authController = require('../controller/user/authController')
-const addressController = require('../controller/user/addressController')
-const profileController = require('../controller/user/profileController')
-const cartController = require('../controller/user/cartController')
-const checkoutController = require('../controller/user/checkoutController')
-const orderController = require("../controller/user/orderController")
-const walletController = require("../controller/user/walletController")
+const UserControllers = require("../config/UserControllers")
 const passport = require('passport');
 const router = express.Router();
 const { userAuth, userBlock, sessionAuth } = require("../middlewares/auth")
 const multer = require('multer');
 const upload = multer();
 
-router.get("/404", userController.pageNotFound);
+router.get("/404", UserControllers.pageController.pageNotFound);
 
-router.get("/", userBlock, userController.loadHome);
+router.get("/logout", UserControllers.authController.logout);
 
-router.get("/login",userAuth, authController.loadLogin)
-router.post("/login",userAuth, authController.login)
+router.get("/", userBlock, UserControllers.pageController.loadHome);
 
-router.get("/signup", userAuth, authController.loadSignup)
-router.post("/signup", userAuth,authController.signup)
+router.get("/login", userAuth, UserControllers.authController.loadLogin);
+router.post("/login", userAuth, UserControllers.authController.login);
+router.get("/signup", userAuth, UserControllers.authController.loadSignup);
+router.post("/signup", userAuth, UserControllers.authController.signup);
 
-router.get("/verify-otp", userAuth, authController.loadVerifyOtp)
-router.post('/verify-otp', userAuth, authController.verifyOtp)
-router.post("/resend-otp", userAuth, authController.resendOTP)
+router.get("/verify-otp", userAuth, UserControllers.authController.loadVerifyOtp);
+router.post('/verify-otp', userAuth, UserControllers.authController.verifyOtp);
+router.post("/resend-otp", userAuth, UserControllers.authController.resendOTP);
 
-router.get("/logout", authController.logout)
 
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/signup" }), (req, res) => {
         res.redirect('/');
 });
 
-router.get("/forgot", authController.loadForgotPassword)
-router.post("/forgot", authController.forgotPassword)
-router.get("/forgotOtp", authController.loadForgotOtp)
-router.post("/forgotOtp", authController.verifyForgotOtp)
-router.get("/resetPassword", authController.loadResetPassword)
-router.post("/resetPassword", authController.resetPassword)
-router.post("/forgotResend", authController.forgotResendOtp)
+router.get("/forgot", UserControllers.authController.loadForgotPassword);
+router.post("/forgot", UserControllers.authController.forgotPassword);
+router.get("/forgotOtp", UserControllers.authController.loadForgotOtp);
+router.post("/forgotOtp", UserControllers.authController.verifyForgotOtp);
+router.get("/resetPassword", UserControllers.authController.loadResetPassword);
+router.post("/resetPassword", UserControllers.authController.resetPassword);
+router.post("/forgotResend", UserControllers.authController.forgotResendOtp);
 
-router.get("/shop", userBlock, userController.loadShop)
-router.get("/shop/:id", userBlock, userController.loadProductDetail);
+router.get("/shop", userBlock, UserControllers.pageController.loadShop);
+router.get("/shop/:id", userBlock, UserControllers.pageController.loadProductDetail);
 
-router.get("/profile", sessionAuth, profileController.loadUserProfile)
-router.patch("/profile", sessionAuth, profileController.updateUserProfile)
+router.get("/profile", sessionAuth, UserControllers.profileController.loadUserProfile);
+router.patch("/profile", sessionAuth, UserControllers.profileController.updateUserProfile);
 
-router.get("/address", sessionAuth, addressController.loadAddress)
-router.post("/address", sessionAuth, addressController.addAddress)
-router.patch("/address/:id", sessionAuth, addressController.editAddress)
-router.delete("/address/:id", sessionAuth, addressController.deleteAddress)
+router.get("/address", sessionAuth, UserControllers.addressController.loadAddress);
+router.post("/address", sessionAuth, UserControllers.addressController.addAddress);
+router.patch("/address/:id", sessionAuth, UserControllers.addressController.editAddress);
+router.delete("/address/:id", sessionAuth, UserControllers.addressController.deleteAddress);
 
-router.get("/security", sessionAuth, profileController.loadSecurity)
-router.patch("/reset-password", sessionAuth, profileController.resetPassword)
-router.post("/reset-email", sessionAuth, profileController.resetEmail)
-router.post("/resendEmail", sessionAuth, profileController.resendEmailOtp)
-router.post("/confirm-otp", sessionAuth, profileController.confirmOtp)
+router.get("/security", sessionAuth, UserControllers.profileController.loadSecurity);
+router.patch("/reset-password", sessionAuth, UserControllers.profileController.resetPassword);
+router.post("/reset-email", sessionAuth, UserControllers.profileController.resetEmail);
+router.post("/resendEmail", sessionAuth, UserControllers.profileController.resendEmailOtp);
+router.post("/confirm-otp", sessionAuth, UserControllers.profileController.confirmOtp);
+;
+router.get("/cart", sessionAuth, UserControllers.cartController.loadCart);
+router.post("/cart", sessionAuth, UserControllers.cartController.addCart);
+router.delete("/cart/:id", sessionAuth, UserControllers.cartController.removeItem);
+router.get('/productVariant/:productId', sessionAuth, UserControllers.cartController.getProductVariant);
+router.put("/cart", sessionAuth, UserControllers.cartController.updateCartItem);
 
-router.get("/cart", sessionAuth, cartController.loadCart)
-router.post("/addCart", sessionAuth, cartController.addCart)
-router.delete("/removeCart/:id", sessionAuth, cartController.removeItem)
-router.get('/productVariant/:productId', sessionAuth, cartController.getProductVariant);
-router.put("/cartUpdate", sessionAuth, cartController.updateCartItem)
+router.get("/wishlist", sessionAuth, UserControllers.wishlistController.loadWishlist);
+router.post("/wishlist", sessionAuth, UserControllers.wishlistController.addWishlist);
+router.delete("/wishlist/:productId", sessionAuth, UserControllers.wishlistController.removeWishlist);
 
-router.get("/wishlist", sessionAuth, profileController.loadWishlist)
-router.post("/wishlist", sessionAuth, profileController.addWishlist)
-router.delete("/wishlist/:productId", sessionAuth, profileController.removeWishlist)
+router.get("/checkout", UserControllers.checkoutController.loadCheckout);
+router.post("/checkout", sessionAuth, upload.none(), UserControllers.checkoutController.razorpayVerificationMiddleware ,UserControllers.checkoutController.checkout);
+router.get('/order-success/:id', sessionAuth, UserControllers.checkoutController.orderSuccess);
 
-router.get("/checkout", sessionAuth, checkoutController.loadCheckout)
-router.post("/placeOrder", sessionAuth, upload.none(), checkoutController.checkout)
-router.get('/order-success/:id', sessionAuth, checkoutController.orderSuccess)
+router.get("/orders", sessionAuth, UserControllers.orderController.loadOrder);
+router.put("/orders", sessionAuth, UserControllers.orderController.cancelItem);
+router.post("/orders/:orderId", sessionAuth, UserControllers.orderController.cancelOrder);
+router.get("/order-detail/:id", sessionAuth, UserControllers.orderController.loadOrderDetail);
+router.post("/returnOrder/:orderId", sessionAuth, UserControllers.orderController.returnOrder);
+router.post("/returnItem/:orderId/:itemIndex", sessionAuth, UserControllers.orderController.returnItem);
 
-router.get("/orders", sessionAuth, orderController.loadOrder)
-router.post("/cancelItem", sessionAuth, orderController.cancelItem)
-router.post("/cancelOrder/:orderId", sessionAuth, orderController.cancelOrder)
-router.get("/orderDetail/:id", sessionAuth, orderController.loadOrderDetail)
-router.post("/returnOrder/:orderId", sessionAuth, orderController.returnOrder)
-router.post("/returnItem/:orderId/:itemIndex", sessionAuth, orderController.returnItem)
+router.get("/wallet", sessionAuth, UserControllers.walletController.loadWallet);
+router.post("/wallet", sessionAuth, UserControllers.walletController.addMoney);
+router.post('/wallet/create-order', UserControllers.walletController.createWalletOrder);
 
-router.get("/wallet", sessionAuth, walletController.loadWallet)
+router.post('/create-razorpay-order', UserControllers.checkoutController.createRazorpayOrder);
 
-router.post('/create-razorpay-order', checkoutController.createRazorpayOrder);
+router.post("/coupon",UserControllers.checkoutController.couponApply)
+
+
+router.get("/orderInvoice/:orderId", sessionAuth, UserControllers.orderController.orderInvoice);
+router.get("/download-invoice/:id", UserControllers.orderController.downloadInvoice);
 
 module.exports = router;

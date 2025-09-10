@@ -26,7 +26,6 @@ const userSchema = new Schema({
     gender:{
         type:String,
         // enum:["Male","Female","Other","Prefer not to say"],
-        required:false,
         default:""
     },
     password:{
@@ -50,46 +49,39 @@ const userSchema = new Schema({
         type:Boolean,
         default:false
     },
-    cart:[{
-        type:Schema.Types.ObjectId,
-        ref:"Cart"
-    }],
-    wallet:[{
-        type:Schema.Types.ObjectId,
-        ref:"Whislist"
-    }],
-    orderHistory:[{
-        type:Schema.Types.ObjectId,
-        ref:"Order"
-    }],
     createdOn:{
         type:Date,
         default:Date.now
     },
-    referalCode:{
+    orderHistory:[{
+        type:Schema.Types.ObjectId,
+        ref:"Order"
+    }],
+    referralCode:{
         type:String
     },
-    redeemed:{
-        type:Boolean,
-        // default:false 
+    referredBy:{
+        type:String,
     },
     redeemedUser:[{
         type:Schema.Types.ObjectId,
         ref:"User"
     }],
-    searchHistory:[{
-        category:{
-            type:Schema.Types.ObjectId,
-            ref:"Category"
-        },
-        brand:{
-            type:String,
-        },
-        searchOn:{
-            type:Date,
-            default:Date.now
-        }
-    }]
+    
+    
+    // searchHistory:[{
+    //     category:{
+    //         type:Schema.Types.ObjectId,
+    //         ref:"Category"
+    //     },
+    //     brand:{
+    //         type:String,
+    //     },
+    //     searchOn:{
+    //         type:Date,
+    //         default:Date.now
+    //     }
+    // }]
 })
 
 const User = mongoose.model("User",userSchema);

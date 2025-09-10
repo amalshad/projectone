@@ -117,8 +117,10 @@
                   </h1>
                   <p class="text-gray-600 text-lg">Save your favorite items for later</p>
                 </div>
+                 <% if (wishlist.products.length> 0) { %>
                 <div class="flex items-center gap-3 mt-4 md:mt-0">
-                  <span class="text-sm text-gray-500" id="wishlistCount"><%= wishlist.products.length %></span>
+                  <span class="text-sm text-gray-500" id="wishlistCount"><%= wishlist.products.length %> Items</span>
+                 
                   <button
                     class="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-primary-500 hover:text-primary-500 transition-all duration-200"
                     onclick="clearAllWishlist()">
@@ -126,10 +128,11 @@
                     <span>Clear All</span>
                   </button>
                 </div>
+                <%}%>
               </div>
 
               <!-- Bulk Actions -->
-              <div
+              <!-- <div
                 class="bg-white rounded-xl p-4 md:p-6 mb-8 shadow-sm border border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4 animate-slide-up"
                 style="animation-delay: 0.3s">
                 <div class="flex items-center gap-4">
@@ -154,7 +157,7 @@
                     <span>Remove</span>
                   </button>
                 </div>
-              </div>
+              </div> -->
 
               <!-- Wishlist Items Grid -->
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
@@ -166,13 +169,13 @@
                     <div
                       class="bg-gradient-to-b from-white to-slate-50 border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-primary-200 transition-all duration-300 hover:-translate-y-2 animate-slide-up"
                       style="animation-delay: <%= 0.3 + index * 0.1 %>s">
-                      <div class="relative h-48 w-full overflow-hidden bg-slate-100">
+                     <a href="/shop/<%= product._id %>"> <div class="relative h-48 w-full overflow-hidden bg-slate-100">
                         <img src="/uploads/productImages/<%= variant?.productImage?.[0] %>"
                           alt="<%= product.productName %>" alt="<%= product.productName %>"
                           class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110">
-                        <input type="checkbox"
-                          class="absolute bottom-3 left-3 w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 wishlist-checkbox">
-                      </div>
+                        <!-- <input type="checkbox"
+                          class="absolute bottom-3 left-3 w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 wishlist-checkbox"> -->
+                      </div></a>
                       <div class="p-6">
                         <h3 class="text-base font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight">
                           <%= product.productName %>
@@ -365,7 +368,7 @@
       // Add to cart
       async function addToCart(productId, variantIndex, price, quantity, button) {
   try {
-    const res = await fetch('/addCart', {
+    const res = await fetch('/cart', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productId, variantIndex, price, quantity })

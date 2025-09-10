@@ -149,32 +149,55 @@
 
 <!-- Cropper Modal -->
 <div id="cropperModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex justify-center items-center">
-  <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 relative">
+  <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 relative">
     <div class="flex items-center justify-between mb-6">
-      <h3 class="text-xl font-semibold text-gray-900">Crop Image</h3>
-      <button onclick="cancelCrop()" class="text-gray-400 hover:text-gray-600 transition-colors">
+      <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+        <i class="fas fa-crop text-primary mr-2"></i>
+        Crop Image
+      </h3>
+      <button onclick="cancelCrop()" class="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg">
         <i class="fas fa-times text-xl"></i>
       </button>
     </div>
     
-    <div class="mb-6">
-      <img id="cropperImage" class="max-w-full max-h-96 mx-auto" />
+    <div class="mb-6 bg-gray-100 rounded-xl p-4">
+      <img id="cropperImage" class="max-w-full max-h-96 mx-auto rounded-lg" />
     </div>
     
-    <div class="flex justify-end space-x-4">
-      <button 
-        onclick="cancelCrop()" 
-        class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors duration-300"
-      >
-        Cancel
-      </button>
-      <button 
-        onclick="cropImage()" 
-        class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-      >
-        Crop & Save
-      </button>
+    <div class="flex items-center justify-between">
+      <div class="text-sm text-gray-600 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+        Drag to adjust the crop area. Image will be resized to 640x640 pixels.
+      </div>
+      <div class="flex space-x-3">
+        <button 
+          onclick="cancelCrop()" 
+          class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors duration-300"
+        >
+          Cancel
+        </button>
+        <button 
+          onclick="cropImage()" 
+          class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex items-center space-x-2"
+        >
+          <i class="fas fa-crop"></i>
+          <span>Crop & Save</span>
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300">
+  <div class="bg-white rounded-xl shadow-2xl border border-gray-200 p-4 flex items-center space-x-3 min-w-[300px]">
+    <div id="toastIcon" class="flex-shrink-0"></div>
+    <div class="flex-1">
+      <p id="toastMessage" class="text-sm font-semibold text-gray-900"></p>
+    </div>
+    <button id="closeToast" class="flex-shrink-0 text-gray-400 hover:text-gray-600 p-1">
+      <i class="fas fa-times"></i>
+    </button>
   </div>
 </div>
 
@@ -185,6 +208,31 @@
 <script>
   let variantIndex = 0;
   let cropper, currentInput;
+
+  // Enhanced image validation
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+  function validateImageFile(file) {
+    if (!file) {
+      showToast('Please select a file', 'error');
+      return false;
+    }
+
+    // Check file type
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
+      showToast('Please select a valid image file (JPEG, PNG, WebP, or GIF)', 'error');
+      return false;
+    }
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      showToast('Image size should be less than 5MB', 'error');
+      return false;
+    }
+
+    return true;
+  }
 
   function addVariant() {
     const container = document.getElementById('variantsSection');
@@ -209,6 +257,7 @@
           type="button" 
           onclick="removeVariant(this)" 
           class="text-red-500 hover:text-red-700 transition-colors duration-300 p-2 hover:bg-red-50 rounded-lg"
+          title="Remove Variant"
         >
           <i class="fas fa-trash"></i>
         </button>
@@ -222,6 +271,7 @@
             name="variants[${variantIndex}][type]" 
             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
             placeholder="e.g., T-Shirt, Mug"
+            required
           />
         </div>
         
@@ -232,6 +282,7 @@
             name="variants[${variantIndex}][color]" 
             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
             placeholder="e.g., Red, Blue"
+            required
           />
         </div>
         
@@ -243,6 +294,7 @@
             name="variants[${variantIndex}][quantity]" 
             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
             placeholder="0"
+            required
           />
         </div>
         
@@ -250,10 +302,11 @@
           <label class="block text-sm font-semibold text-gray-700">Regular Price (₹)</label>
           <input 
             type="number" 
-            min="0" 
+            min="1" 
             name="variants[${variantIndex}][regularPrice]" 
             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
             placeholder="0"
+            required
           />
         </div>
         
@@ -261,10 +314,11 @@
           <label class="block text-sm font-semibold text-gray-700">Sale Price (₹)</label>
           <input 
             type="number" 
-            min="0" 
+            min="1" 
             name="variants[${variantIndex}][salesPrice]" 
             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
             placeholder="0"
+            required
           />
         </div>
       </div>
@@ -273,30 +327,45 @@
         <h5 class="text-md font-semibold text-gray-900 flex items-center">
           <i class="fas fa-images text-primary mr-2"></i>
           Product Images
+          <span class="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">At least 1 image required</span>
         </h5>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
           ${[1, 2, 3, 4].map(i => `
             <div class="space-y-3">
-              <label class="block text-sm font-medium text-gray-700">Image ${i}</label>
-              <div class="relative">
+              <label class="block text-sm font-medium text-gray-700">Image ${i} ${i === 1 ? '(Required)' : '(Optional)'}</label>
+              <div class="relative image-upload-container">
                 <input 
                   type="file" 
-                  accept="image/*" 
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" 
                   class="hidden image-input" 
-                  onchange="openCropper(event)" 
+                  onchange="handleImageUpload(event)" 
                   name="variants[${variantIndex}][productImage][]"
                   id="file-${variantIndex}-${i}"
+                  ${i === 1 ? 'required' : ''}
                 />
                 <label 
                   for="file-${variantIndex}-${i}" 
-                  class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-300"
+                  class="upload-label flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all duration-300 hover:border-primary"
                 >
                   <div class="flex flex-col items-center justify-center pt-5 pb-6">
                     <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
-                    <p class="text-xs text-gray-500">Click to upload</p>
+                    <p class="text-xs text-gray-500 text-center">Click to upload<br>JPEG, PNG, WebP, GIF</p>
+                    <p class="text-xs text-gray-400 mt-1">Max 5MB</p>
                   </div>
                 </label>
-                <img class="preview-image absolute inset-0 w-full h-full object-cover rounded-xl hidden" />
+                <div class="preview-container absolute inset-0 w-full h-full rounded-xl hidden">
+                  <img class="preview-image w-full h-full object-cover rounded-xl" />
+                  <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center">
+                    <div class="flex space-x-2">
+                      <button type="button" onclick="changeImage(this)" class="bg-white text-gray-700 px-3 py-1 rounded-lg text-xs hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-edit mr-1"></i>Change
+                      </button>
+                      <button type="button" onclick="removeImage(this)" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition-colors">
+                        <i class="fas fa-trash mr-1"></i>Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           `).join('')}
@@ -333,6 +402,135 @@
         noVariantsMessage.style.display = 'block';
       }
     }, 300);
+  }
+
+  function handleImageUpload(event) {
+    const file = event.target.files[0];
+    
+    // Validate the image file
+    if (!validateImageFile(file)) {
+      event.target.value = ''; // Clear the input
+      return;
+    }
+
+    currentInput = event.target;
+    const reader = new FileReader();
+    
+    reader.onload = function (e) {
+      const image = document.getElementById("cropperImage");
+      image.src = e.target.result;
+      document.getElementById("cropperModal").classList.remove("hidden");
+      document.body.style.overflow = 'hidden';
+      
+      image.onload = () => {
+        cropper?.destroy();
+        cropper = new Cropper(image, {
+          aspectRatio: 1,
+          viewMode: 1,
+          background: false,
+          autoCropArea: 0.8,
+          responsive: true,
+          restore: false,
+          guides: true,
+          center: true,
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
+        });
+      };
+    };
+    
+    reader.readAsDataURL(file);
+  }
+
+  function cropImage() {
+    if (!cropper) {
+      showToast('Cropper not initialized', 'error');
+      return;
+    }
+
+    const canvas = cropper.getCroppedCanvas({
+      width: 640,
+      height: 640,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: 'high',
+    });
+
+    canvas.toBlob(blob => {
+      const croppedFile = new File([blob], `cropped-${Date.now()}.jpg`, { 
+        type: "image/jpeg",
+        lastModified: Date.now()
+      });
+      
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(croppedFile);
+      currentInput.files = dataTransfer.files;
+
+      // Show preview with enhanced display
+      showImagePreview(currentInput, canvas.toDataURL('image/jpeg', 0.9));
+      
+      closeModal();
+      showToast('Image cropped successfully!', 'success');
+    }, 'image/jpeg', 0.9);
+  }
+
+  function showImagePreview(input, imageSrc) {
+    const container = input.closest('.image-upload-container');
+    const uploadLabel = container.querySelector('.upload-label');
+    const previewContainer = container.querySelector('.preview-container');
+    const previewImage = container.querySelector('.preview-image');
+    
+    // Hide upload label and show preview
+    uploadLabel.style.display = 'none';
+    previewContainer.classList.remove('hidden');
+    previewImage.src = imageSrc;
+    
+    // Add a subtle animation
+    previewContainer.style.opacity = '0';
+    previewContainer.style.transform = 'scale(0.9)';
+    
+    setTimeout(() => {
+      previewContainer.style.opacity = '1';
+      previewContainer.style.transform = 'scale(1)';
+      previewContainer.style.transition = 'all 0.3s ease';
+    }, 50);
+  }
+
+  function changeImage(button) {
+    const container = button.closest('.image-upload-container');
+    const input = container.querySelector('.image-input');
+    input.click();
+  }
+
+  function removeImage(button) {
+    const container = button.closest('.image-upload-container');
+    const input = container.querySelector('.image-input');
+    const uploadLabel = container.querySelector('.upload-label');
+    const previewContainer = container.querySelector('.preview-container');
+    
+    // Clear the input
+    input.value = '';
+    
+    // Hide preview and show upload label
+    previewContainer.classList.add('hidden');
+    uploadLabel.style.display = 'flex';
+    
+    showToast('Image removed', 'info');
+  }
+
+  function cancelCrop() {
+    if (currentInput) {
+      currentInput.value = ''; // Clear the input
+    }
+    closeModal();
+  }
+
+  function closeModal() {
+    cropper?.destroy();
+    cropper = null;
+    document.getElementById("cropperModal").classList.add("hidden");
+    document.body.style.overflow = 'auto';
   }
 
   function validateProductForm() {
@@ -373,67 +571,53 @@
         }
       });
       valid = false;
+      return valid;
+    }
+
+    // Validate each variant has at least one image
+    const variants = document.querySelectorAll('#variantsSection > div[data-index]');
+    let hasImageError = false;
+
+    variants.forEach((variant, index) => {
+      const firstImageInput = variant.querySelector('input[type="file"]');
+      if (!firstImageInput || !firstImageInput.files || firstImageInput.files.length === 0) {
+        showToast(`Variant ${index + 1} requires at least one image`, 'error');
+        hasImageError = true;
+        valid = false;
+      }
+    });
+
+    if (hasImageError) {
+      return valid;
     }
 
     return valid;
   }
 
-  function openCropper(event) {
-    const file = event.target.files[0];
-    if (!file || !file.type.startsWith("image/")) return;
-
-    currentInput = event.target;
-    const reader = new FileReader();
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastIcon = document.getElementById('toastIcon');
+    const toastMessage = document.getElementById('toastMessage');
     
-    reader.onload = function (e) {
-      const image = document.getElementById("cropperImage");
-      image.src = e.target.result;
-      document.getElementById("cropperModal").classList.remove("hidden");
-      
-      image.onload = () => {
-        cropper?.destroy();
-        cropper = new Cropper(image, {
-          aspectRatio: 1,
-          viewMode: 1,
-          background: false,
-          autoCropArea: 0.8,
-        });
-      };
+    const icons = {
+      success: '<div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-check text-green-600"></i></div>',
+      error: '<div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center"><i class="fas fa-exclamation-circle text-red-600"></i></div>',
+      warning: '<div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center"><i class="fas fa-exclamation-triangle text-yellow-600"></i></div>',
+      info: '<div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-info-circle text-blue-600"></i></div>'
     };
     
-    reader.readAsDataURL(file);
-  }
-
-  function cropImage() {
-    cropper.getCroppedCanvas({ width: 640, height: 640 }).toBlob(blob => {
-      const croppedFile = new File([blob], "cropped.jpg", { type: "image/jpeg" });
-      const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(croppedFile);
-      currentInput.files = dataTransfer.files;
-
-      // Show preview
-      const previewImg = currentInput.parentElement.querySelector('.preview-image');
-      const reader = new FileReader();
-      
-      reader.onload = function (e) {
-        previewImg.src = e.target.result;
-        previewImg.classList.remove("hidden");
-        previewImg.parentElement.querySelector('label').style.display = 'none';
-      };
-      
-      reader.readAsDataURL(croppedFile);
-      closeModal();
-    });
-  }
-
-  function cancelCrop() {
-    closeModal();
-  }
-
-  function closeModal() {
-    cropper?.destroy();
-    cropper = null;
-    document.getElementById("cropperModal").classList.add("hidden");
+    toastIcon.innerHTML = icons[type] || icons.success;
+    toastMessage.textContent = message;
+    
+    toast.classList.remove('translate-x-full');
+    
+    setTimeout(() => {
+      toast.classList.add('translate-x-full');
+    }, 4000);
+    
+    document.getElementById('closeToast').onclick = () => {
+      toast.classList.add('translate-x-full');
+    };
   }
 
   // Form submission
@@ -459,9 +643,9 @@
       const variant = {
         type: variantBlock.querySelector(`[name="variants[${index}][type]"]`).value,
         color: variantBlock.querySelector(`[name="variants[${index}][color]"]`).value,
-        quantity: variantBlock.querySelector(`[name="variants[${index}][quantity]"]`).value,
-        regularPrice: variantBlock.querySelector(`[name="variants[${index}][regularPrice]"]`).value,
-        salesPrice: variantBlock.querySelector(`[name="variants[${index}][salesPrice]"]`).value,
+        quantity: parseInt(variantBlock.querySelector(`[name="variants[${index}][quantity]"]`).value),
+        regularPrice: parseFloat(variantBlock.querySelector(`[name="variants[${index}][regularPrice]"]`).value),
+        salesPrice: parseFloat(variantBlock.querySelector(`[name="variants[${index}][salesPrice]"]`).value),
         productImage: []
       };
       variants.push(variant);
@@ -515,6 +699,13 @@
     setTimeout(() => {
       addVariant();
     }, 500);
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && !document.getElementById('cropperModal').classList.contains('hidden')) {
+        cancelCrop();
+      }
+    });
   });
 </script>
 
@@ -583,10 +774,66 @@
     transition: all 0.3s ease;
   }
 
-  /* Image upload hover effects */
-  .image-input + label:hover {
-    border-color: #8a2be2;
-    background-color: rgba(138, 43, 226, 0.05);
+  /* Enhanced image upload styling */
+  .image-upload-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-label:hover {
+    border-color: #8a2be2 !important;
+    background-color: rgba(138, 43, 226, 0.05) !important;
+  }
+
+  .upload-label:hover i {
+    color: #8a2be2;
+    transform: scale(1.1);
+  }
+
+  .preview-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .preview-container:hover .preview-image {
+    transform: scale(1.05);
+  }
+
+  .preview-image {
+    transition: transform 0.3s ease;
+  }
+
+  /* Cropper modal enhancements */
+  #cropperModal {
+    backdrop-filter: blur(4px);
+  }
+
+  #cropperModal .bg-white {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Toast notification styling */
+  #toast {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Required field indicator */
+  input[required] + label::after,
+  select[required] + label::after {
+    content: " *";
+    color: #ef4444;
+  }
+
+  /* Loading state for submit button */
+  button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  /* Image validation feedback */
+  .image-input:invalid + label {
+    border-color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.05);
   }
 </style>
 

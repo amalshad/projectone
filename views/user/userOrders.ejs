@@ -1038,8 +1038,8 @@
         cancelletionReason: formData.get('cancelletionReason')
       };
 
-      fetch('/cancelItem', {
-        method: 'POST',
+      fetch('/orders', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -1063,13 +1063,13 @@
 
     // Other Order Functions
     function viewOrderDetails(orderId) {
-      window.location.href = `/orderDetail/${orderId}`;
+      window.location.href = `/order-detail/${orderId}`;
     }
 
     function cancelEntireOrder(orderId) {
       if (!confirm('Are you sure you want to cancel this entire order?')) return;
 
-      fetch(`/cancelOrder/${orderId}`, {
+      fetch(`/orders/${orderId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

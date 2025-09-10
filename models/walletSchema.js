@@ -19,6 +19,9 @@ const walletSchema = new Schema({
                 enum: ["Credit", "Debit"],
                 required: true
             },
+            paymentMethod:{
+                type:String,
+            },
             amount: {
                 type: Number,
                 required: true

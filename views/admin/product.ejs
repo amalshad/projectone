@@ -105,16 +105,6 @@
           <i class="fas fa-box text-primary mr-3"></i>
           Products (<%= products.length %>)
         </h3>
-        <div class="flex items-center space-x-4 text-sm text-gray-600">
-          <div class="flex items-center space-x-2">
-            <div class="w-3 h-3 bg-green-200 border-l-4 border-green-500 rounded-sm"></div>
-            <span class="text-green-700 font-medium">Active</span>
-          </div>
-          <div class="flex items-center space-x-2">
-            <div class="w-3 h-3 bg-red-200 border-l-4 border-red-500 rounded-sm"></div>
-            <span class="text-red-700 font-medium">Blocked</span>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -201,16 +191,22 @@
                     <div class="text-sm font-semibold text-gray-900">
                       <%= totalStock %> units
                     </div>
-                    <% if (totalStock < 10) { %>
+                    <% if (totalStock < 10 && totalStock >= 1 ) { %>
                       <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                         <i class="fas fa-exclamation-triangle mr-1"></i>
                         Low Stock
                       </span>
-                    <% } else if (totalStock < 50) { %>
+                    <% } else if (totalStock < 50 && totalStock > 10) { %>
                       <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        <i class="fas fa-clock mr-1"></i>
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
                         Medium Stock
                       </span>
+                    <% } else if (totalStock < 1) { %>
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Out Of Stock
+                      </span>
+
                     <% } else { %>
                       <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         <i class="fas fa-check mr-1"></i>
@@ -394,7 +390,7 @@
         btn.disabled = true;
 
         fetch(`/admin/listProduct/${productId}`, {
-          method: 'POST',
+          method: 'PATCH',
         })
         .then(response => {
           if (!response.ok) throw new Error("Failed to toggle status");

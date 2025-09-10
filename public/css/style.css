@@ -861,9 +861,21 @@ img {
 
 .wishlist-btn {
   background: rgba(220, 53, 69, 0.1);
-  color: var(--sale-color);
+  color: var(--sale-color); 
   border: 1px solid var(--sale-color);
 }
+
+
+.wishlist-btn.active {
+  background: var(--sale-color);         
+  color: #fff;                          
+  border-color: var(--sale-color);      
+}
+
+.wishlist-btn.active .fa-heart {
+  color: #fff;                         
+}
+
 
 .wishlist-btn:hover {
   background: var(--sale-color);

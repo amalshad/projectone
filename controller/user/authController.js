@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer")
 const env = require("dotenv").config()
 const bcrypt = require("bcrypt")
 const { sendVerificationEmail, generateOtp } = require('../../utils/authHelper')
+const shortid = require('shortid');
 
 // LOAD SIGUP
 const loadSignup = async (req, res) => {
@@ -35,13 +36,24 @@ const loadLogin = async (req, res) => {
 // SIGN UP
 const signup = async (req, res) => {
 
-  const { name, email, password, confirmPassword } = req.body
+  const { name, email, password, confirmPassword, referralCode } = req.body
   try {
     const find = await User.findOne({ email })
 
     if (password !== confirmPassword) return res.render("signup", { message: "Password not matching" })
 
     if (find) return res.render("signup", { message: "User already exist" });
+
+    if (referralCode) {
+
+      const isfind = await User.findOne({ referralCode })
+      if (isfind) return res.json({ success: false, message: "Code already exist" });
+
+    } else {
+
+      referralCode = shortid.generate();
+    }
+
 
     const otp = generateOtp()
 
@@ -51,7 +63,7 @@ const signup = async (req, res) => {
     }
 
     req.session.userOtp = otp
-    req.session.userData = { name, email, password }
+    req.session.userData = { name, email, password, referralCode }
 
     res.redirect("/verify-otp");
 
@@ -65,53 +77,67 @@ const signup = async (req, res) => {
 
 const loadVerifyOtp = async (req, res) => {
   try {
+
     if (req.session.user) {
+
       res.redirect('/')
+
     } else {
+
       res.render('verify-otp')
+
     }
   } catch (error) {
 
+    console.error("Load Verify Otp",error)
   }
 }
-// VERIFY OTP
+
+
 const verifyOtp = async (req, res) => {
   try {
 
     const { otp } = req.body
 
     if (otp === req.session.userOtp) {
+      
       const user = req.session.userData
       const hashpassword = await bcrypt.hash(user.password, 10)
 
       const saveUserdata = new User({
         name: user.name,
         email: user.email,
-        password: hashpassword
+        password: hashpassword,
+        referralCode: user.referralCode
       })
+
       await saveUserdata.save()
+
       req.session.user = saveUserdata._id;
+
       res.json({ success: true, redirectUrl: '/' })
+
     } else {
       res.status(400).json({ success: false, message: "Invalid OTP" })
     }
+
   } catch (error) {
     console.error("Error Verify OTP", error);
     res.status(500).json({ success: false, message: "An error occured" })
   }
 }
 
-//RESEND OTP
+
 const resendOTP = async (req, res) => {
 
   try {
 
-    // const { email } = req.session.userData
-    // if (!email) {
+    const { email } = req.session.userData
+    if (!email) {
 
-    //   return res.status(400).json({ success: false, message: "Email not found in session" })
+      return res.status(400).json({ success: false, message: "Email not found in session" })
 
-    // }
+    }
 
     const otp = generateOtp();
     req.session.userOtp = otp
@@ -129,13 +155,13 @@ const resendOTP = async (req, res) => {
     }
   } catch (error) {
 
-    console.error("Error resending OTP")
+    console.error("Error resending OTP", error)
     res.status(500).json({ success: false, message: "internal server error.Plaese try again" })
 
   }
 }
 
-// LOGIN
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -166,7 +192,7 @@ const login = async (req, res) => {
 };
 
 
-// LOG OUT
+
 const logout = async (req, res) => {
 
 
@@ -193,7 +219,7 @@ const logout = async (req, res) => {
 
 }
 
-// LOAD FORGOT PASSWORD
+
 const loadForgotPassword = async (req, res) => {
   try {
     const message = req.session.message
@@ -208,7 +234,7 @@ const loadForgotPassword = async (req, res) => {
   }
 }
 
-// FORGOT PASSWORD
+
 const forgotPassword = async (req, res) => {
   try {
 
@@ -242,7 +268,7 @@ const forgotPassword = async (req, res) => {
   }
 }
 
-// LOAD FORGOT OTP
+
 const loadForgotOtp = async (req, res) => {
   try {
     if (req.session.email) {
@@ -256,7 +282,7 @@ const loadForgotOtp = async (req, res) => {
   }
 }
 
-// VERIFY FORGOT OTP
+
 const verifyForgotOtp = async (req, res) => {
   try {
     const { otp } = req.body
@@ -278,7 +304,7 @@ const verifyForgotOtp = async (req, res) => {
   }
 }
 
-// LOAD RESET PASSWORD
+
 const loadResetPassword = async (req, res) => {
   const email = req.session.email
   try {
@@ -294,7 +320,7 @@ const loadResetPassword = async (req, res) => {
   }
 }
 
-// RESET PASSWORD
+
 const resetPassword = async (req, res) => {
   try {
 

@@ -1,10 +1,12 @@
 const User = require("../../models/userSchema")
 const Category = require("../../models/categorySchema");
 const Product = require("../../models/productSchema")
-const Cart=require("../../models/cartSchema")
+const Cart = require("../../models/cartSchema")
+const Wishlist = require("../../models/wishlistSchema")
+const Offer=require("../../models/offerSchema")
 
 
-// LOAD HOME
+
 const loadHome = async (req, res) => {
   try {
     const categories = await Category.find({ isListed: true })
@@ -14,8 +16,6 @@ const loadHome = async (req, res) => {
     let user = req.session.passport?.user || req.session.user
 
     userData = await User.findById(user);
-
-
 
 
     res.render("home", {
@@ -32,7 +32,6 @@ const loadHome = async (req, res) => {
   }
 }
 
-// PAGE NOT FOUND
 const pageNotFound = async (req, res) => {
   try {
 
@@ -47,39 +46,31 @@ const pageNotFound = async (req, res) => {
 }
 
 
-//LOAD SHOP
+
+
+
+
 const loadShop = async (req, res) => {
   try {
     const { category, priceRange, sort, search } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 6;
+    const skip = (page - 1) * limit;
+
     const filter = { isBlocked: false };
     const sortOption = {};
-    // category.isListed=true
-
 
     if (category) {
       filter.category = category;
-
     } else {
-      const foundCat = await Category.find({ isListed: true })
-      filter.category = foundCat.map(v => v._id)
+      const foundCat = await Category.find({ isListed: true });
+      filter.category = foundCat.map(v => v._id);
     }
-    let minPrice = 100;
-    let maxPrice = 2000;
+
 
     if (priceRange) {
       const [min, max] = priceRange.split('-').map(Number);
       if (!isNaN(min) && !isNaN(max)) {
-        minPrice = min;
-        maxPrice = max;
-      }
-    }
-
-
-
-    if (priceRange) {
-      const [min, max] = priceRange.split('-').map(Number);
-
-      if (min && max) {
         filter.$or = [
           { 'variants.salesPrice': { $gte: min, $lte: max } },
           { 'variants.regularPrice': { $gte: min, $lte: max } }
@@ -104,9 +95,19 @@ const loadShop = async (req, res) => {
     }
 
 
-    const products = await Product.find(filter).sort(sortOption);
-    const categories = await Category.find({ isListed: true });
+    const totalProducts = await Product.countDocuments(filter);
 
+
+    let products = await Product.find(filter)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit);
+
+      // products = await Promise.all(products.map(p => applyOffers(p)));
+      // console.log(products[0].variants);
+      
+
+    const categories = await Category.find({ isListed: true });
 
     let selectedCategoryName = '';
     if (category) {
@@ -116,10 +117,17 @@ const loadShop = async (req, res) => {
       }
     }
 
-
-
-    let user = req.session.passport?.user || req.session.user
+    let user = req.session.passport?.user || req.session.user;
     userData = await User.findById(user);
+
+    const totalPages = Math.ceil(totalProducts / limit);
+
+
+    function buildPaginationUrl(pageNumber) {
+      const params = new URLSearchParams(req.query);
+      params.set("page", pageNumber);
+      return `/shop?${params.toString()}`;
+    }
 
     res.render("shop", {
       products,
@@ -131,28 +139,41 @@ const loadShop = async (req, res) => {
       priceRange: priceRange || '',
       sort: sort || 'recommended',
       search: search || "",
-      minPrice,
-      maxPrice,
+      minPrice: 100,
+      maxPrice: 2000,
+      currentPage: page,
+      totalPages,
+      productsPerPage: limit,
+      totalProducts,
+      buildPaginationUrl
     });
+
   } catch (error) {
+
     console.error("Shop page error:", error);
     res.status(500).render("error", { message: "Something went wrong" });
   }
 };
 
-// LOAD PRODUCT DETAIL
+
 const loadProductDetail = async (req, res) => {
   try {
+
     const product = await Product.findById(req.params.id);
-    const categories = await Category.find();
+    const categories = await Category.find({ isListed: true });
 
-    if (!product) return res.status(404).render("notfound", { message: "Product not found" });
+    if (!product || product.isBlocked) return res.status(404).render("notfound", { message: "Product not found" });
+    // if (!product || product.isBlocked) return res.redirect("/shop");
 
-    const user = req.session.passport?.user || req.session.user;
-    const userData = await User.findById(user);
-    const cart = await Cart.findOne({ userId: user });
+    const id = req.session.passport?.user || req.session.user;
+    const user = await User.findById(id)
+    const cart = await Cart.findOne({ userId: id });
+    const wishlist = await Wishlist.findOne({ userId: id })
 
-    // Adjust stock based on cart
+
+
+
+
     if (cart) {
       cart.items.forEach(item => {
         if (item.productId.toString() === product._id.toString()) {
@@ -171,12 +192,22 @@ const loadProductDetail = async (req, res) => {
       _id: { $ne: req.params.id }
     });
 
+
+
+
+    const inWishlist = wishlist?.products.some(p => p.productId.toString() === req.params.id.toString()) || false
+
+
+
     res.render("product-detail", {
       title: "Shad Electro",
       product,
       relatedProduct,
-      user: userData,
-      categories
+      user,
+      categories,
+      inWishlist: inWishlist || ""
+
+
     });
   } catch (err) {
     console.error("Product Detail Error:", err);
@@ -189,9 +220,4 @@ const loadProductDetail = async (req, res) => {
 
 
 
-module.exports = {
-  loadHome,
-  pageNotFound,
-  loadShop,
-  loadProductDetail,
-}
+module.exports = { loadHome, pageNotFound, loadShop, loadProductDetail, }

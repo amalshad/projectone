@@ -9,14 +9,6 @@
   <link rel="stylesheet" href="/css/shop.css">
 </head>
 <body>
-  <!-- Loading Screen -->
-  <!-- <div class="loading-screen" id="loadingScreen">
-    <div class="loading-spinner">
-      <div class="spinner"></div>
-      <p>Loading ....</p>
-    </div>
-  </div> -->
-
   <!-- Header -->
   <header class="header animate-slide-down">
     <div class="container">
@@ -50,6 +42,9 @@
           <% } %>
           <% if (sort) { %>
             <input type="hidden" name="sort" value="<%= sort %>">
+          <% } %>
+          <% if (currentPage) { %>
+            <input type="hidden" name="page" value="<%= currentPage %>">
           <% } %>
         </form>
         
@@ -103,19 +98,19 @@
           <div class="nav-underline"></div>
         </a></li>
         <li><a href="/shop" class="nav-link <%= !selectedCategory ? 'active' : '' %>">
-          <span>Shop All</span>
-          <div class="nav-underline"></div>
-        </a></li>
-        <li><a href="/about" class="nav-link">
-          <span>About</span>
+          <span>Shop</span>
           <div class="nav-underline"></div>
         </a></li>
         <li><a href="/contact" class="nav-link">
           <span>Contact</span>
           <div class="nav-underline"></div>
         </a></li>
-        <li><a href="/deals-Offers" class="nav-link special-link">
-          <span>Deals/Offers</span>
+        <li><a href="/about" class="nav-link">
+          <span>About</span>
+          <div class="nav-underline"></div>
+        </a></li>
+        <li><a href="/help" class="nav-link special-link">
+          <span>Help</span>
           <div class="nav-underline"></div>
         </a></li>
       </ul>
@@ -261,11 +256,6 @@
               <% if (sort) { %>
                 <input type="hidden" name="sort" value="<%= sort %>">
               <% } %>
-              
-              <!-- <button type="submit" class="apply-filter-btn">
-                <i class="fas fa-check"></i>
-                <span>Apply Filter</span>
-              </button> -->
             </div>
           </div>
         </form>
@@ -283,8 +273,13 @@
               <% } %>
             </h1>
             <p class="product-count">
-              <span class="count-number"><%= products.length %></span>
+              <span class="count-number"><%= totalProducts %></span>
               <span class="count-text">products found</span>
+              <% if (totalPages > 1) { %>
+                <span class="page-info">
+                  (Page <%= currentPage %> of <%= totalPages %>)
+                </span>
+              <% } %>
             </p>
           </div>
           
@@ -328,7 +323,7 @@
                   const hasSale = variant && variant.salesPrice && variant.regularPrice && variant.salesPrice < variant.regularPrice;
                 %>
                 
-                <% if (hasSale) { %>
+                <% if (variant.appliedOffer) { %>
                   <div class="sale-badge pulse-animation">
                     <span>SALE</span>
                   </div>
@@ -368,14 +363,14 @@
                   
                   <div class="product-price">
                     <% if (variant) { %>
-                      <% if (variant.salesPrice && variant.regularPrice) { %>
-                        <span class="current-price">₹<%= variant.salesPrice.toFixed(2) %></span>
-                        <span class="original-price">₹<%= variant.regularPrice.toFixed(2) %></span>
+                      <% if (variant.appliedOffer>0) { %>
+                        <span class="current-price">₹<%= variant.finalPrice.toFixed(2) %></span>
+                        <span class="original-price">₹<%= variant.salesPrice.toFixed(2) %></span>
                         <span class="discount-percent">
-                          <%= Math.round(((variant.regularPrice - variant.salesPrice) / variant.regularPrice) * 100) %>% OFF
+                          <%= variant.appliedOffer %>% OFF
                         </span>
-                      <% } else if (variant.regularPrice) { %>
-                        <span class="current-price">₹<%= variant.regularPrice.toFixed(2) %></span>
+                      <% } else if (variant.salesPrice) { %>
+                        <span class="current-price">₹<%= variant.salesPrice.toFixed(2) %></span>
                       <% } else { %>
                         <span class="current-price">₹0.00</span>
                       <% } %>
@@ -399,6 +394,85 @@
             <% }); %>
           <% } %>
         </div>
+
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+          <div class="pagination-container animate-fade-in-up">
+            <div class="pagination-info">
+              <span>Showing <%= ((currentPage - 1) * productsPerPage) + 1 %> - <%= Math.min(currentPage * productsPerPage, totalProducts) %> of <%= totalProducts %> products</span>
+            </div>
+            
+            <nav class="pagination" aria-label="Product pagination">
+              <!-- Previous Button -->
+              <% if (currentPage > 1) { %>
+                <a href="<%= buildPaginationUrl(currentPage - 1) %>" class="pagination-btn pagination-prev" aria-label="Previous page">
+                  <i class="fas fa-chevron-left"></i>
+                  <span>Previous</span>
+                </a>
+              <% } else { %>
+                <span class="pagination-btn pagination-prev disabled" aria-label="Previous page">
+                  <i class="fas fa-chevron-left"></i>
+                  <span>Previous</span>
+                </span>
+              <% } %>
+
+              <!-- Page Numbers -->
+              <div class="pagination-numbers">
+                <% 
+                  let startPage = Math.max(1, currentPage - 2);
+                  let endPage = Math.min(totalPages, currentPage + 2);
+                  
+                  // Adjust if we're near the beginning or end
+                  if (currentPage <= 3) {
+                    endPage = Math.min(5, totalPages);
+                  }
+                  if (currentPage > totalPages - 3) {
+                    startPage = Math.max(1, totalPages - 4);
+                  }
+                %>
+
+                <!-- First page if not in range -->
+                <% if (startPage > 1) { %>
+                  <a href="<%= buildPaginationUrl(1) %>" class="pagination-number">1</a>
+                  <% if (startPage > 2) { %>
+                    <span class="pagination-ellipsis">...</span>
+                  <% } %>
+                <% } %>
+
+                <!-- Page numbers in range -->
+                <% for (let i = startPage; i <= endPage; i++) { %>
+                  <% if (i === currentPage) { %>
+                    <span class="pagination-number active" aria-current="page"><%= i %></span>
+                  <% } else { %>
+                    <a href="<%= buildPaginationUrl(i) %>" class="pagination-number"><%= i %></a>
+                  <% } %>
+                <% } %>
+
+                <!-- Last page if not in range -->
+                <% if (endPage < totalPages) { %>
+                  <% if (endPage < totalPages - 1) { %>
+                    <span class="pagination-ellipsis">...</span>
+                  <% } %>
+                  <a href="<%= buildPaginationUrl(totalPages) %>" class="pagination-number"><%= totalPages %></a>
+                <% } %>
+              </div>
+
+              <!-- Next Button -->
+              <% if (currentPage < totalPages) { %>
+                <a href="<%= buildPaginationUrl(currentPage + 1) %>" class="pagination-btn pagination-next" aria-label="Next page">
+                  <span>Next</span>
+                  <i class="fas fa-chevron-right"></i>
+                </a>
+              <% } else { %>
+                <span class="pagination-btn pagination-next disabled" aria-label="Next page">
+                  <span>Next</span>
+                  <i class="fas fa-chevron-right"></i>
+                </span>
+              <% } %>
+            </nav>
+
+          </div>
+        <% } %>
       </div>
     </div>
   </main>
@@ -475,15 +549,8 @@
   </div>
 
   <script>
-    // Loading screen
-    window.addEventListener('load', function() {
-      const loadingScreen = document.getElementById('loadingScreen');
-      loadingScreen.style.opacity = '0';
-      setTimeout(() => {
-        loadingScreen.style.display = 'none';
-      }, 500);
-    });
-
+    let user = <%- JSON.stringify(user) %>;
+    
     // Intersection Observer for animations
     const observerOptions = {
       threshold: 0.1,
@@ -562,6 +629,7 @@
     function updateSort(sortValue) {
       const url = new URL(window.location.href);
       url.searchParams.set('sort', sortValue);
+      url.searchParams.set('page', '1'); // Reset to first page when sorting
       
       // Add loading effect
       const sortSelect = document.getElementById('sort-select');
@@ -569,6 +637,8 @@
       
       window.location.href = url.toString();
     }
+    
+
     
     // Toggle sidebar sections
     function toggleSection(icon) {
@@ -607,48 +677,95 @@
     }
 
     // Add to cart functionality
-    function addToCart(productId, button) {
-      console.log('Adding to cart:', productId);
-      
-      // Add success animation
-      button.classList.add('success');
-      button.innerHTML = '<i class="fas fa-check"></i>';
-      
-      // Show toast
-      showToast('Item added to cart!');
-      
-      // Reset button after animation
-      setTimeout(() => {
-        button.classList.remove('success');
-        button.innerHTML = '<i class="fas fa-shopping-cart"></i>';
-      }, 2000);
+    async function addToCart(productId, button) {
+      if(!user){
+        return showToast("Please Login!",'error')
+      }
+      try {
+        const variantIndex = 0;
+        const quantity = 1;
+
+        const res = await fetch('/cart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ productId, variantIndex, quantity })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          button.classList.add('success');
+          button.innerHTML = '<i class="fas fa-check"></i>';
+
+          showToast("Item added to cart!");
+
+          setTimeout(() => {
+            button.classList.remove('success');
+            button.innerHTML = '<i class="fas fa-shopping-cart"></i>';
+          }, 2000);
+
+          // Update cart count in header
+          const cartCount = document.querySelector('.cart-count');
+          if (cartCount) {
+            cartCount.textContent = parseInt(cartCount.textContent) + 1;
+          }
+        } else {
+          showToast(data.message || "Failed to add to cart");
+        }
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        showToast("Something went wrong. Try again.");
+      }
     }
 
     // Add to wishlist functionality
-    function addToWishlist(productId, button) {
-      console.log('Adding to wishlist:', productId);
-      
-      // Add success animation
-      button.classList.add('success');
-      button.innerHTML = '<i class="fas fa-check"></i>';
-      
-      // Show toast
-      showToast('Item added to wishlist!');
-      
-      // Reset button after animation
-      setTimeout(() => {
-        button.classList.remove('success');
-        button.innerHTML = '<i class="fas fa-heart"></i>';
-      }, 2000);
+    async function addToWishlist(productId, button) {
+      try {
+        const res = await fetch('/wishlist', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ productId })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          button.classList.add('success');
+          const icon = button.querySelector('i');
+          icon.className = 'fas fa-check';
+          showToast("Added to wishlist!");
+
+          setTimeout(() => {
+            button.classList.remove('success');
+            icon.className = 'fas fa-heart';
+          }, 2000);
+        } else {
+          showToast(data.message || "Already in wishlist");
+        }
+      } catch (error) {
+        console.error("Error adding to wishlist:", error);
+        showToast("Failed to add to wishlist");
+      }
     }
 
     // Toast notification
-    function showToast(message) {
+    function showToast(message, type = 'success') {
       const toast = document.getElementById('successToast');
       const messageElement = toast.querySelector('.toast-message');
       
       messageElement.textContent = message;
       toast.classList.add('show');
+      
+      // Add error styling if needed
+      if (type === 'error') {
+        toast.classList.add('error');
+      } else {
+        toast.classList.remove('error');
+      }
       
       setTimeout(() => {
         toast.classList.remove('show');
@@ -677,6 +794,217 @@
         this.style.transform = 'translateY(0) scale(1)';
       });
     });
+
+    // Pagination animations
+    document.addEventListener('DOMContentLoaded', function() {
+      const paginationNumbers = document.querySelectorAll('.pagination-number');
+      paginationNumbers.forEach((number, index) => {
+        number.style.animationDelay = `${index * 0.05}s`;
+      });
+    });
   </script>
+
+  <style>
+    /* Pagination Styles */
+    .pagination-container {
+      margin-top: 3rem;
+      padding: 2rem 0;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .pagination-info {
+      color: #6b7280;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pagination-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      color: #374151;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      min-width: 100px;
+      justify-content: center;
+    }
+
+    .pagination-btn:hover:not(.disabled) {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+    }
+
+    .pagination-btn.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .pagination-numbers {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+    }
+
+    .pagination-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      color: #374151;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      animation: fadeInUp 0.3s ease forwards;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .pagination-number:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+    }
+
+    .pagination-number.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color: #667eea;
+      color: white;
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .pagination-ellipsis {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      color: #9ca3af;
+      font-weight: bold;
+    }
+
+    .items-per-page {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .items-per-page select {
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      background: white;
+      color: #374151;
+      font-size: 0.875rem;
+    }
+
+    .items-per-page select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    /* Page info in header */
+    .page-info {
+      color: #9ca3af;
+      font-size: 0.875rem;
+      margin-left: 0.5rem;
+    }
+
+    /* Toast error styling */
+    .toast.error .toast-content {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    /* Responsive pagination */
+    @media (max-width: 768px) {
+      .pagination-container {
+        margin-top: 2rem;
+        padding: 1.5rem 0;
+        gap: 1rem;
+      }
+
+      .pagination {
+        gap: 0.25rem;
+      }
+
+      .pagination-btn {
+        padding: 0.5rem 0.75rem;
+        min-width: 80px;
+        font-size: 0.875rem;
+      }
+
+      .pagination-number {
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.875rem;
+      }
+
+      .items-per-page {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.25rem;
+      }
+    }
+
+    /* Animation keyframes */
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Loading states */
+    .pagination-loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .pagination-loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </body>
 </html>

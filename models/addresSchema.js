@@ -14,7 +14,7 @@ const addressSchema = new Schema({
             default: "Shipping"
 
         },
-        title: {
+        addressTitle: {
             type: String,
             required: true
         },

@@ -1,5 +1,4 @@
 const mongoose =require("mongoose");
-const { products } = require("../data/data");
 const {Schema}=mongoose;
 
 const productSchema = new Schema({
@@ -36,10 +35,10 @@ const productSchema = new Schema({
                 type:Number,
                 required:true
             },
-            productOffer:{
-                type:Number,
-                default:0
-            },
+            // productOffer:{
+            //     type:Number,
+            //     default:0
+            // },
             quantity:{
                 type:Number,
                 required:0
@@ -54,9 +53,19 @@ const productSchema = new Schema({
             },type:{
                 type:String,
                 required:true
+            },
+            finalPrice:{
+                type: Number,
+            },
+            appliedOffer:{
+                type: Number,
+                min:0,
+                max:100
+
             }
         }
-    ]
+    ],
+
 
 },{timestamps:true});
 

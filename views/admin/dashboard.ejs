@@ -1,14 +1,35 @@
 <%- include("../../views/partials/admin/header") %>
 
 <main class="flex-1 overflow-auto p-8">
-  <!-- Welcome Section -->
+  <!-- Welcome Section with Filters -->
   <div class="mb-8">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
       <div>
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome back, Admin! 👋</h1>
         <p class="text-gray-600">Here's what's happening with your store today</p>
       </div>
+      
+      <!-- Period Filter -->
       <div class="flex items-center space-x-4">
+        <div class="flex items-center bg-white rounded-xl border border-gray-200 p-1">
+          <button id="dayFilter" class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 text-gray-600 hover:text-primary">
+            Daily
+          </button>
+          <button id="monthFilter" class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 bg-primary text-white">
+            Monthly
+          </button>
+          <button id="yearFilter" class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 text-gray-600 hover:text-primary">
+            Yearly
+          </button>
+        </div>
+        
+        <!-- Generate Ledger Book Button -->
+        <button id="generateLedgerBtn" onclick="generateLedger()" 
+          class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2">
+          <i class="fas fa-book text-lg"></i>
+          Generate Ledger Book
+        </button>
+        
         <div class="text-sm text-gray-500 bg-white px-4 py-2 rounded-xl border border-gray-200">
           <i class="fas fa-calendar mr-2"></i>
           <%= new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
@@ -17,50 +38,50 @@
     </div>
   </div>
 
-  <!-- Stats Cards -->
+  <!-- Real Stats Cards -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Total Views Card -->
+    <!-- Total Revenue Card -->
     <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
       <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-full -mr-10 -mt-10"></div>
       <div class="relative">
         <div class="flex items-center justify-between mb-4">
           <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-            <i class="fas fa-eye text-white text-lg"></i>
+            <i class="fas fa-rupee-sign text-white text-lg"></i>
           </div>
           <div class="text-right">
-            <div class="flex items-center text-green-500 text-sm font-medium">
-              <i class="fas fa-arrow-up mr-1"></i>
-              +0.43%
+            <div class="flex items-center <%= revenueGrowth >= 0 ? 'text-green-500' : 'text-red-500' %> text-sm font-medium">
+              <i class="fas fa-arrow-<%= revenueGrowth >= 0 ? 'up' : 'down' %> mr-1"></i>
+              <%= Math.abs(revenueGrowth) %>%
             </div>
           </div>
         </div>
         <div>
-          <p class="text-gray-600 text-sm font-medium mb-1">Total Views</p>
-          <h3 class="text-2xl font-bold text-gray-900">3.456K</h3>
-          <p class="text-xs text-gray-500 mt-1">vs last month</p>
+          <p class="text-gray-600 text-sm font-medium mb-1">Total Revenue</p>
+          <h3 class="text-2xl font-bold text-gray-900" id="totalRevenue">₹<%= totalRevenue.toLocaleString('en-IN') %></h3>
+          <p class="text-xs text-gray-500 mt-1">vs last period</p>
         </div>
       </div>
     </div>
 
-    <!-- Total Profit Card -->
+    <!-- Total Orders Card -->
     <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
       <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-full -mr-10 -mt-10"></div>
       <div class="relative">
         <div class="flex items-center justify-between mb-4">
           <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-            <i class="fas fa-dollar-sign text-white text-lg"></i>
+            <i class="fas fa-shopping-cart text-white text-lg"></i>
           </div>
           <div class="text-right">
-            <div class="flex items-center text-green-500 text-sm font-medium">
-              <i class="fas fa-arrow-up mr-1"></i>
-              +4.35%
+            <div class="flex items-center <%= orderGrowth >= 0 ? 'text-green-500' : 'text-red-500' %> text-sm font-medium">
+              <i class="fas fa-arrow-<%= orderGrowth >= 0 ? 'up' : 'down' %> mr-1"></i>
+              <%= Math.abs(orderGrowth) %>%
             </div>
           </div>
         </div>
         <div>
-          <p class="text-gray-600 text-sm font-medium mb-1">Total Profit</p>
-          <h3 class="text-2xl font-bold text-gray-900">$45.2K</h3>
-          <p class="text-xs text-gray-500 mt-1">vs last month</p>
+          <p class="text-gray-600 text-sm font-medium mb-1">Total Orders</p>
+          <h3 class="text-2xl font-bold text-gray-900" id="totalOrders"><%= totalOrders.toLocaleString('en-IN') %></h3>
+          <p class="text-xs text-gray-500 mt-1">vs last period</p>
         </div>
       </div>
     </div>
@@ -74,16 +95,16 @@
             <i class="fas fa-box text-white text-lg"></i>
           </div>
           <div class="text-right">
-            <div class="flex items-center text-green-500 text-sm font-medium">
+            <div class="flex items-center text-blue-500 text-sm font-medium">
               <i class="fas fa-arrow-up mr-1"></i>
-              +2.59%
+              Active
             </div>
           </div>
         </div>
         <div>
           <p class="text-gray-600 text-sm font-medium mb-1">Total Products</p>
-          <h3 class="text-2xl font-bold text-gray-900">2,450</h3>
-          <p class="text-xs text-gray-500 mt-1">vs last month</p>
+          <h3 class="text-2xl font-bold text-gray-900" id="totalProducts"><%= totalProducts.toLocaleString('en-IN') %></h3>
+          <p class="text-xs text-gray-500 mt-1">in inventory</p>
         </div>
       </div>
     </div>
@@ -99,40 +120,38 @@
           <div class="text-right">
             <div class="flex items-center text-green-500 text-sm font-medium">
               <i class="fas fa-arrow-up mr-1"></i>
-              +0.95%
+              Registered
             </div>
           </div>
         </div>
         <div>
           <p class="text-gray-600 text-sm font-medium mb-1">Total Users</p>
-          <h3 class="text-2xl font-bold text-gray-900">3,456</h3>
-          <p class="text-xs text-gray-500 mt-1">vs last month</p>
+          <h3 class="text-2xl font-bold text-gray-900" id="totalUsers"><%= totalUsers.toLocaleString('en-IN') %></h3>
+          <p class="text-xs text-gray-500 mt-1">customers</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Charts and Analytics Section -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-    <!-- Sales Chart -->
-    <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold text-gray-900">Sales Overview</h3>
-        <div class="flex items-center space-x-2">
-          <button class="text-sm text-gray-500 hover:text-primary transition-colors duration-300 px-3 py-1 rounded-lg hover:bg-primary-light">7D</button>
-          <button class="text-sm text-white bg-primary px-3 py-1 rounded-lg">30D</button>
-          <button class="text-sm text-gray-500 hover:text-primary transition-colors duration-300 px-3 py-1 rounded-lg hover:bg-primary-light">90D</button>
-        </div>
-      </div>
-      <div class="h-64 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary-hover/5 rounded-xl">
-        <div class="text-center">
-          <i class="fas fa-chart-line text-4xl text-primary mb-4"></i>
-          <p class="text-gray-600">Sales chart will be displayed here</p>
-          <p class="text-sm text-gray-500">Integration with Chart.js or similar</p>
-        </div>
+  <!-- Sales Chart Section -->
+  <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100 mb-8">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-bold text-gray-900 flex items-center">
+        <i class="fas fa-chart-line text-primary mr-3"></i>
+        Sales Overview
+      </h3>
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-gray-500">Period:</span>
+        <span id="currentPeriod" class="text-sm font-semibold text-primary">Monthly</span>
       </div>
     </div>
+    <div class="h-80">
+      <canvas id="salesChart"></canvas>
+    </div>
+  </div>
 
+  <!-- Charts and Recent Orders Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
     <!-- Recent Orders -->
     <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100">
       <div class="flex items-center justify-between mb-6">
@@ -142,60 +161,254 @@
         </a>
       </div>
       <div class="space-y-4">
-        <!-- Sample Order Items -->
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-300">
+        <% if (recentOrders && recentOrders.length > 0) { %>
+          <% recentOrders.forEach((order, index) => { %>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-300">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                  #<%= index + 1 %>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900">Order #<%= order._id.toString().slice(-6).toUpperCase() %></p>
+                  <p class="text-sm text-gray-500"><%= order.userId?.name || 'Guest User' %></p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-gray-900">₹<%= order.finalAmount.toLocaleString('en-IN') %></p>
+                <% 
+                  let statusClass = 'bg-gray-100 text-gray-800';
+                  let statusText = order.status || 'Processing';
+                  if (statusText.toLowerCase() === 'delivered') {
+                    statusClass = 'bg-green-100 text-green-800';
+                  } else if (statusText.toLowerCase() === 'shipped') {
+                    statusClass = 'bg-blue-100 text-blue-800';
+                  } else if (statusText.toLowerCase() === 'processing') {
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                  }
+                %>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium <%= statusClass %>">
+                  <%= statusText %>
+                </span>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-shopping-cart text-3xl mb-3"></i>
+            <p>No recent orders found</p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Quick Stats Summary -->
+    <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900">Quick Summary</h3>
+      </div>
+      <div class="space-y-4">
+        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-              #1
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <i class="fas fa-chart-line text-blue-600"></i>
             </div>
             <div>
-              <p class="font-medium text-gray-900">Order #12345</p>
-              <p class="text-sm text-gray-500">John Doe</p>
+              <p class="font-medium text-gray-900">Average Order Value</p>
+              <p class="text-sm text-gray-500">Per transaction</p>
             </div>
           </div>
           <div class="text-right">
-            <p class="font-semibold text-gray-900">$299.99</p>
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Completed
-            </span>
+            <p class="font-semibold text-gray-900">₹<%= totalOrders > 0 ? Math.round(totalRevenue / totalOrders).toLocaleString('en-IN') : '0' %></p>
           </div>
         </div>
 
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-300">
+        <div class="flex items-center justify-between p-3 bg-green-50 rounded-xl">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-              #2
+            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <i class="fas fa-percentage text-green-600"></i>
             </div>
             <div>
-              <p class="font-medium text-gray-900">Order #12346</p>
-              <p class="text-sm text-gray-500">Jane Smith</p>
+              <p class="font-medium text-gray-900">Revenue Growth</p>
+              <p class="text-sm text-gray-500">This month</p>
             </div>
           </div>
           <div class="text-right">
-            <p class="font-semibold text-gray-900">$149.99</p>
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-              Processing
-            </span>
+            <p class="font-semibold <%= revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600' %>">
+              <%= revenueGrowth >= 0 ? '+' : '' %><%= revenueGrowth %>%
+            </p>
           </div>
         </div>
 
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-300">
+        <div class="flex items-center justify-between p-3 bg-purple-50 rounded-xl">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-              #3
+            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <i class="fas fa-shopping-bag text-purple-600"></i>
             </div>
             <div>
-              <p class="font-medium text-gray-900">Order #12347</p>
-              <p class="text-sm text-gray-500">Mike Johnson</p>
+              <p class="font-medium text-gray-900">Top Products</p>
+              <p class="text-sm text-gray-500">Available variations</p>
             </div>
           </div>
           <div class="text-right">
-            <p class="font-semibold text-gray-900">$89.99</p>
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              Shipped
-            </span>
+            <p class="font-semibold text-gray-900"><%= topProducts.length %></p>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top 10 Best Selling Products and Categories Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    
+    <!-- Top 10 Best Selling Products -->
+    <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-gray-900 flex items-center">
+          <i class="fas fa-trophy text-yellow-500 mr-3"></i>
+          Top 10 Best Selling Products
+        </h3>
+        <button class="text-primary hover:text-primary-hover transition-colors duration-300 text-sm font-medium">
+          View All <i class="fas fa-arrow-right ml-1"></i>
+        </button>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-200">
+              <th class="text-left py-3 px-2 text-sm font-semibold text-gray-600">Rank</th>
+              <th class="text-left py-3 px-2 text-sm font-semibold text-gray-600">Product</th>
+              <th class="text-right py-3 px-2 text-sm font-semibold text-gray-600">Units Sold</th>
+              <th class="text-right py-3 px-2 text-sm font-semibold text-gray-600">Revenue</th>
+            </tr>
+          </thead>
+          <tbody id="topProductsTable">
+            <% if (topProducts && topProducts.length > 0) { %>
+              <% topProducts.forEach((product, index) => { %>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200">
+                  <td class="py-3 px-2">
+                    <div class="flex items-center">
+                      <% 
+                        let rankColor = 'bg-gray-400';
+                        if (index === 0) rankColor = 'bg-yellow-500';
+                        else if (index === 1) rankColor = 'bg-gray-500';
+                        else if (index === 2) rankColor = 'bg-amber-600';
+                      %>
+                      <div class="w-6 h-6 <%= rankColor %> rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        <%= index + 1 %>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-2">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <% if (product.variants && product.variants[0] && product.variants[0].productImage && product.variants[0].productImage[0]) { %>
+                          <img src="/uploads/productImages/<%= product.variants[0].productImage[0] %>" 
+                               alt="<%= product.productName %>" 
+                               class="w-full h-full object-cover rounded-lg">
+                        <% } else { %>
+                          <i class="fas fa-box text-gray-600"></i>
+                        <% } %>
+                      </div>
+                      <div>
+                        <p class="font-semibold text-gray-900 text-sm"><%= product.productName %></p>
+                        <p class="text-xs text-gray-500">Product</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-2 text-right">
+                    <span class="font-bold text-gray-900"><%= product.totalQuantitySold %></span>
+                  </td>
+                  <td class="py-3 px-2 text-right">
+                    <span class="font-bold text-green-600">₹<%= product.totalRevenue.toLocaleString('en-IN') %></span>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="4" class="py-8 text-center text-gray-500">
+                  <i class="fas fa-box text-3xl mb-3"></i>
+                  <p>No product sales data available</p>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Top 10 Best Selling Categories -->
+    <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-gray-900 flex items-center">
+          <i class="fas fa-tags text-orange-500 mr-3"></i>
+          Top 10 Best Selling Categories
+        </h3>
+        <button class="text-primary hover:text-primary-hover transition-colors duration-300 text-sm font-medium">
+          View All <i class="fas fa-arrow-right ml-1"></i>
+        </button>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-200">
+              <th class="text-left py-3 px-2 text-sm font-semibold text-gray-600">Rank</th>
+              <th class="text-left py-3 px-2 text-sm font-semibold text-gray-600">Category</th>
+              <th class="text-right py-3 px-2 text-sm font-semibold text-gray-600">Units Sold</th>
+              <th class="text-right py-3 px-2 text-sm font-semibold text-gray-600">Revenue</th>
+            </tr>
+          </thead>
+          <tbody id="topCategoriesTable">
+            <% if (topCategories && topCategories.length > 0) { %>
+              <% topCategories.forEach((category, index) => { %>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200">
+                  <td class="py-3 px-2">
+                    <div class="flex items-center">
+                      <% 
+                        let rankColor = 'bg-gray-400';
+                        if (index === 0) rankColor = 'bg-yellow-500';
+                        else if (index === 1) rankColor = 'bg-gray-500';
+                        else if (index === 2) rankColor = 'bg-amber-600';
+                      %>
+                      <div class="w-6 h-6 <%= rankColor %> rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        <%= index + 1 %>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-2">
+                    <div class="flex items-center space-x-3">
+                      <% 
+                        const categoryColors = ['from-blue-500 to-blue-600', 'from-green-500 to-green-600', 'from-purple-500 to-purple-600', 'from-orange-500 to-orange-600', 'from-red-500 to-red-600', 'from-pink-500 to-pink-600', 'from-indigo-500 to-indigo-600', 'from-yellow-500 to-yellow-600', 'from-teal-500 to-teal-600', 'from-gray-500 to-gray-600'];
+                        const colorClass = categoryColors[index % categoryColors.length];
+                      %>
+                      <div class="w-10 h-10 bg-gradient-to-br <%= colorClass %> rounded-lg flex items-center justify-center">
+                        <i class="fas fa-tags text-white"></i>
+                      </div>
+                      <div>
+                        <p class="font-semibold text-gray-900 text-sm"><%= category.categoryName %></p>
+                        <p class="text-xs text-gray-500">Category</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-2 text-right">
+                    <span class="font-bold text-gray-900"><%= category.totalQuantitySold %></span>
+                  </td>
+                  <td class="py-3 px-2 text-right">
+                    <span class="font-bold text-green-600">₹<%= category.totalRevenue.toLocaleString('en-IN') %></span>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="4" class="py-8 text-center text-gray-500">
+                  <i class="fas fa-tags text-3xl mb-3"></i>
+                  <p>No category sales data available</p>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -235,9 +448,348 @@
   </div>
 </main>
 
+<!-- Ledger Modal -->
+<div id="ledgerModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-gray-900 flex items-center">
+          <i class="fas fa-book text-green-600 mr-3"></i>Generate Ledger Book
+        </h3>
+        <button onclick="closeLedgerModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Select Period</label>
+          <select id="ledgerPeriod" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="yearly">Yearly</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+
+        <div id="customDateRange" class="hidden space-y-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">From Date</label>
+            <input type="date" id="fromDate" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">To Date</label>
+            <input type="date" id="toDate" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Format</label>
+          <select id="ledgerFormat" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent">
+            <option value="pdf">PDF</option>
+            <option value="excel">Excel</option>
+            <option value="csv">CSV</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+        <button onclick="closeLedgerModal()" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-300 font-semibold">
+          Cancel
+        </button>
+        <button onclick="downloadLedger()" class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 font-semibold">
+          <i class="fas fa-download mr-2"></i>Generate & Download
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300">
+  <div class="bg-white rounded-xl shadow-2xl border border-gray-200 p-4 flex items-center space-x-3 min-w-[300px]">
+    <div id="toastIcon" class="flex-shrink-0"></div>
+    <div class="flex-1">
+      <p id="toastMessage" class="text-sm font-semibold text-gray-900"></p>
+    </div>
+    <button id="closeToast" class="flex-shrink-0 text-gray-400 hover:text-gray-600 p-1">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
+  let salesChart;
+  let currentFilter = 'month';
+  
+  // Pass data from backend to JavaScript
+  const initialChartData = <%- JSON.stringify(chartData) %>;
+
+  // Initialize everything on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeSalesChart();
+    setupEventListeners();
+    animateCards();
+  });
+
+  // Setup event listeners
+  function setupEventListeners() {
+    // Period filter buttons
+    document.getElementById('dayFilter').addEventListener('click', () => changePeriod('day'));
+    document.getElementById('monthFilter').addEventListener('click', () => changePeriod('month'));
+    document.getElementById('yearFilter').addEventListener('click', () => changePeriod('year'));
+
+    // Ledger period selector
+    document.getElementById('ledgerPeriod').addEventListener('change', function() {
+      const customRange = document.getElementById('customDateRange');
+      if (this.value === 'custom') {
+        customRange.classList.remove('hidden');
+      } else {
+        customRange.classList.add('hidden');
+      }
+    });
+
+    // Toast close button
+    document.getElementById('closeToast').addEventListener('click', hideToast);
+  }
+
+  // Change period filter
+  async function changePeriod(period) {
+    // Update active button
+    document.querySelectorAll('#dayFilter, #monthFilter, #yearFilter').forEach(btn => {
+      btn.classList.remove('bg-primary', 'text-white');
+      btn.classList.add('text-gray-600', 'hover:text-primary');
+    });
+
+    const activeBtn = document.getElementById(period + 'Filter');
+    activeBtn.classList.add('bg-primary', 'text-white');
+    activeBtn.classList.remove('text-gray-600', 'hover:text-primary');
+
+    // Update current period display
+    document.getElementById('currentPeriod').textContent = period.charAt(0).toUpperCase() + period.slice(1) + 'ly';
+    
+    currentFilter = period;
+    
+    try {
+      // Fetch new data from server
+      const response = await fetch(`/admin/chart-data?period=${period}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        updateSalesChart(period, data.chartData);
+        updateStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      // Fallback to initial data
+      updateSalesChart(period, initialChartData[period] || []);
+    }
+  }
+
+  // Initialize sales chart
+  function initializeSalesChart() {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    
+    salesChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: getChartLabels('month'),
+        datasets: [{
+          label: 'Sales (₹)',
+          data: initialChartData.monthly || [],
+          borderColor: '#8a2be2',
+          backgroundColor: 'rgba(138, 43, 226, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#8a2be2',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 20
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: 'white',
+            bodyColor: 'white',
+            borderColor: '#8a2be2',
+            borderWidth: 1,
+            callbacks: {
+              label: function(context) {
+                return 'Sales: ₹' + context.parsed.y.toLocaleString('en-IN');
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            },
+            ticks: {
+              callback: function(value) {
+                return '₹' + value.toLocaleString('en-IN');
+              }
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Update sales chart based on period
+  function updateSalesChart(period, data) {
+    salesChart.data.labels = getChartLabels(period);
+    salesChart.data.datasets[0].data = data;
+    salesChart.update('active');
+  }
+
+  // Get chart labels based on period
+  function getChartLabels(period) {
+    switch(period) {
+      case 'day':
+        return Array.from({length: 31}, (_, i) => `${i + 1}`);
+      case 'month':
+        return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      case 'year':
+        const currentYear = new Date().getFullYear();
+        return Array.from({length: 5}, (_, i) => `${currentYear - 4 + i}`);
+      default:
+        return [];
+    }
+  }
+
+  // Update stats based on API response
+  function updateStats(stats) {
+    if (stats) {
+      document.getElementById('totalRevenue').textContent = '₹' + stats.totalRevenue.toLocaleString('en-IN');
+      document.getElementById('totalOrders').textContent = stats.totalOrders.toLocaleString('en-IN');
+      document.getElementById('totalProducts').textContent = stats.totalProducts.toLocaleString('en-IN');
+      document.getElementById('totalUsers').textContent = stats.totalUsers.toLocaleString('en-IN');
+    }
+  }
+
+  // Generate ledger book
+  function generateLedger() {
+    const modal = document.getElementById('ledgerModal');
+    modal.classList.remove('hidden');
+    modal.querySelector('.bg-white').classList.remove('scale-95');
+    modal.querySelector('.bg-white').classList.add('scale-100');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Close ledger modal
+  function closeLedgerModal() {
+    const modal = document.getElementById('ledgerModal');
+    modal.querySelector('.bg-white').classList.remove('scale-100');
+    modal.querySelector('.bg-white').classList.add('scale-95');
+    
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }, 300);
+  }
+
+  // Download ledger
+async function downloadLedger() {
+    const period = document.getElementById('ledgerPeriod').value;
+    const format = document.getElementById('ledgerFormat').value;
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+
+    showToast('Generating ledger book...', 'info');
+
+    try {
+        const response = await fetch('/admin/generate-ledger', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                period,
+                format,
+                fromDate: period === 'custom' ? fromDate : null,
+                toDate: period === 'custom' ? toDate : null
+            })
+        });
+
+        if (response.ok) {
+            // Handle file download
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ledger-${period}-${Date.now()}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showToast('Ledger book downloaded successfully!', 'success');
+            closeLedgerModal();
+        } else {
+            throw new Error('Failed to generate ledger');
+        }
+    } catch (error) {
+        console.error('Error generating ledger:', error);
+        showToast('Failed to generate ledger book. Please try again.', 'error');
+    }
+}
+
+
+  // Show toast notification
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const icon = document.getElementById('toastIcon');
+    const messageEl = document.getElementById('toastMessage');
+
+    const icons = {
+      success: '<div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-check text-green-600"></i></div>',
+      error: '<div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center"><i class="fas fa-exclamation-circle text-red-600"></i></div>',
+      info: '<div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-info-circle text-blue-600"></i></div>'
+    };
+
+    icon.innerHTML = icons[type] || icons.success;
+    messageEl.textContent = message;
+    
+    toast.classList.remove('translate-x-full');
+    
+    setTimeout(() => {
+      toast.classList.add('translate-x-full');
+    }, 4000);
+  }
+
+  // Hide toast
+  function hideToast() {
+    document.getElementById('toast').classList.add('translate-x-full');
+  }
+
   // Animate cards on load
-  window.addEventListener('load', function() {
+  function animateCards() {
     const cards = document.querySelectorAll('.card-shadow');
     cards.forEach((card, index) => {
       setTimeout(() => {
@@ -245,9 +797,9 @@
         card.style.transform = 'translateY(0)';
       }, index * 100);
     });
-  });
+  }
 
-  // Add some interactive effects
+  // Add hover effects to cards
   document.querySelectorAll('.card-shadow').forEach(card => {
     card.addEventListener('mouseenter', function() {
       this.style.transform = 'translateY(-2px)';
@@ -256,6 +808,16 @@
     card.addEventListener('mouseleave', function() {
       this.style.transform = 'translateY(0)';
     });
+  });
+
+  // Close modal on outside click
+  document.getElementById('ledgerModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLedgerModal();
+  });
+
+  // Close modal on escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLedgerModal();
   });
 </script>
 

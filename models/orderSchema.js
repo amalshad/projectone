@@ -138,13 +138,13 @@ const orderSchema = new Schema({
         required: false
     },
     returnTitle: {
-            type: String,
-            enum: ['Item damaged', 'Not expected', 'Size issue', 'Quality issue', 'Others']
-        },
-        returnReason: {
-            type: String,
-            required: false,
-        }
+        type: String,
+        enum: ['Item damaged', 'Not expected', 'Size issue', 'Quality issue', 'Others']
+    },
+    returnReason: {
+        type: String,
+        required: false,
+    }
 })
 
 const Order = mongoose.model("Order", orderSchema);

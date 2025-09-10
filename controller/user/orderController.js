@@ -1,9 +1,11 @@
-const Address = require("../../models/addresSchema")
 const User = require("../../models/userSchema")
 const Category = require("../../models/categorySchema");
 const Product = require("../../models/productSchema")
-const Cart = require('../../models/cartSchema')
 const Order = require('../../models/orderSchema')
+const Wallet =require("../../models/walletSchema")
+const ejs = require("ejs");
+const path = require("path");
+const puppeteer = require("puppeteer");
 const { getStatusClass, getStatusIcon, getPaymentStatusClass } = require('../../utils/ejsHelpers');
 
 
@@ -14,7 +16,7 @@ const loadOrder = async (req, res) => {
 
 
     const user = await User.findById(userId);
-    const categories = await Category.find();
+    const categories = await Category.find({ isListed: true });
     const orders = await Order.find({ userId })
       .sort({ createdOn: -1 })
       .populate('orderedItems.product');
@@ -37,7 +39,7 @@ const loadOrder = async (req, res) => {
 const cancelItem = async (req, res) => {
   try {
     const { orderId, itemIndex, cancelletionTitle, cancelletionReason } = req.body
-  
+
     const order = await Order.findById(orderId)
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
@@ -47,6 +49,39 @@ const cancelItem = async (req, res) => {
     if (!['Processing', 'Pending'].includes(item.status)) {
       return res.status(404).json({ success: false, message: "Item cannot be cancelled now" })
     };
+
+    if(order.paymentStatus=='Paid'){
+      const userId =req.session.user||req.session.passport.user
+      item.status = 'Cancelled';
+    item.cancelletionTitle = cancelletionTitle;
+    item.cancelletionReason = cancelletionReason;
+    // order.totalPrice-=item.quantity*item.price
+    // order.finalAmount-=item.quantity*item.price
+    const amount = item.price * item.quantity;
+      let wallet = await Wallet.findOne({ userId });
+
+      const transaction = {
+        direction: "Credit",
+        amount,
+        description: `Refund for returned item in order ${order.orderId}`,
+        orderId
+      };
+
+      if (wallet) {
+        wallet.balance += amount;
+        wallet.transaction.push(transaction);
+        await wallet.save();
+
+      }
+      else {
+        wallet = new Wallet({
+          userId,
+          balance: amount,
+          transaction: [transaction]
+        });
+        await wallet.save();
+      }
+    }
 
 
     item.status = 'Cancelled';
@@ -112,6 +147,7 @@ const cancelOrder = async (req, res) => {
 
 const loadOrderDetail = async (req, res) => {
   try {
+
     const userId = req.session.user || req.session.passport?.user;
 
 
@@ -143,8 +179,8 @@ const loadOrderDetail = async (req, res) => {
 
 const returnOrder = async (req, res) => {
   try {
-    
-    
+
+
     const { orderId } = req.params
     const { returnTitle, returnReason } = req.body
 
@@ -153,8 +189,8 @@ const returnOrder = async (req, res) => {
     if (!order) return res.status(400).json({ success: false, message: "Order not found" });
 
     order.status = "Return Request"
-    order.returnTitle=returnTitle
-    order.returnReason=returnReason
+    order.returnTitle = returnTitle
+    order.returnReason = returnReason
 
     order.orderedItems.forEach(item => {
       if (item.status !== 'Returned' && item.status !== 'Cancelled') {
@@ -210,6 +246,63 @@ const returnItem = async (req, res) => {
   }
 }
 
+const orderInvoice = async (req, res) => {
+  try {
+
+    const userId = req.session.user || req.session.passport?.user;
+    const user = await User.findById(userId)
+    const orderId = req.params.orderId
+    const categories = await Category.find({ isListed: true })
+    const order = await Order.findOne({ _id: orderId, userId }).populate("orderedItems.product")
 
 
-module.exports = { loadOrder, cancelItem, cancelOrder, loadOrderDetail, returnItem, returnOrder }
+    res.render("orderInvoice", {
+      categories,
+      order,
+      user
+    })
+  } catch (error) {
+    console.error("Error at orderInvoice", error);
+    res.status(500).redirect("/404");
+  }
+}
+
+const downloadInvoice = async (req, res) => {
+  try {
+
+    const userId = req.session.user || req.session.passport?.user;
+    const id = req.params.id;
+
+    const order = await Order.findOne({ _id: id, userId }).populate('orderedItems.product')
+    const user = await User.findById(userId)
+    const categories = await Category.find()
+
+
+    const html = await ejs.renderFile(
+      path.join(__dirname, "../../views/user/orderInvoice.ejs"),
+      { categories, order, user }
+    );
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    const pdfBuffer = await page.pdf({ format: "A4" });
+    await browser.close();
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "attachment; filename=invoice.pdf"
+    });
+
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error("Error at downloadInvoice", error);
+    res.status(500).json({ success: false, message: "Error generating invoice PDF" });
+  }
+}
+
+
+
+
+module.exports = { loadOrder, cancelItem, cancelOrder, loadOrderDetail, returnItem, returnOrder, orderInvoice, downloadInvoice }

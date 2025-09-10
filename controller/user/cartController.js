@@ -7,18 +7,26 @@ const Cart = require('../../models/cartSchema')
 
 const loadCart = async (req, res) => {
   try {
+   
     const userId = req.session.passport?.user || req.session.user;
     const search = req.query.query || '';
 
-    const categories = await Category.find();
+    const categories = await Category.find({ isListed: true });
     const userData = await User.findById(userId);
 
     let cart = await Cart.findOne({ userId }).populate("items.productId");
 
     const stockWarnings = [];
 
+    //  cart.items.forEach((item)=> {
+    //               const product = item.productId;
+    //               const variant = product.variants[item.variantIndex];
+    //               if(!variant || variant.quantity===0 ||product.isBlocked) return;
+    //  }
+                  
+
     if (cart) {
-      for (const item of cart.items) {
+      for (const item of cart.items){
         const product = item.productId;
         const variant = product?.variants?.[item.variantIndex];
 
@@ -34,7 +42,6 @@ const loadCart = async (req, res) => {
       }
       await cart.save();
 
-      // Filtered search (optional)
       if (search.trim()) {
         cart.items = cart.items.filter(item => {
           const productName = item.productId?.productName || '';
@@ -51,7 +58,7 @@ const loadCart = async (req, res) => {
       orders: "",
       categories,
       cart,
-      stockWarnings, // Send to EJS
+      stockWarnings,
       search
     });
 
@@ -65,9 +72,11 @@ const loadCart = async (req, res) => {
 
 const addCart = async (req, res) => {
   try {
+    
+    
 
     const userId = req.session.passport?.user || req.session.user;
-    const { productId, quantity, variantIndex, price } = req.body;
+    const { productId, quantity, variantIndex } = req.body;
 
     // const totalPrice = quantity * price;
 
@@ -119,6 +128,8 @@ const addCart = async (req, res) => {
     res.json({ success: true, message: "Product added to Cart" });
 
   } catch (error) {
+   
+    
     console.error("Error at addCart", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }

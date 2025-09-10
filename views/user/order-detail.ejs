@@ -1295,7 +1295,7 @@
               <div class="header-actions">
                 <!-- Make Download Invoice more prominent -->
                 <% if (order.status === 'Delivered' || order.paymentStatus === 'Paid' || ['Processing', 'Shipped'].includes(order.status)) { %>
-                  <a href="/api/orders/<%= order._id %>/invoice" class="header-btn primary invoice-btn" target="_blank">
+                  <a href="/orderInvoice/<%= order._id %>" class="header-btn primary invoice-btn" target="_blank">
                     <i class="fas fa-file-invoice"></i>
                     Download Invoice
                   </a>
@@ -1488,7 +1488,7 @@
                     
                     <div class="action-buttons-grid">
                       <% if (order.status === 'Delivered' || order.paymentStatus === 'Paid' || ['Processing', 'Shipped'].includes(order.status)) { %>
-                        <a href="/api/orders/<%= order._id %>/invoice" class="action-btn btn-primary" target="_blank">
+                        <a href="/itemInvoice/<%= order._id %>" class="action-btn btn-primary" target="_blank">
                           <i class="fas fa-download"></i>
                           Download Invoice
                         </a>
@@ -1504,12 +1504,12 @@
                         Track Order
                       </a>
                       
-                      <% if (['Processing', 'Pending'].includes(order.status)) { %>
+                      <!-- <% if (['Processing', 'Pending'].includes(order.status)) { %>
                         <button onclick="cancelEntireOrder('<%= order._id %>')" class="action-btn btn-danger">
                           <i class="fas fa-times"></i>
                           Cancel Order
                         </button>
-                      <% } %>
+                      <% } %> -->
                       
                       <!-- <% if (order.status === 'Delivered') { %>
                         <button onclick="openReturnModal('<%= order._id %>', null, 'order')" class="action-btn btn-warning">
@@ -1653,7 +1653,7 @@
                   <p class="invoice-description">
                     Get your official invoice in PDF format. Perfect for expense reports and record keeping.
                   </p>
-                  <a href="/api/orders/<%= order._id %>/invoice" class="download-btn primary" target="_blank">
+                  <a href="/orderInvoice/<%= order._id %>" class="download-btn primary" target="_blank">
                     <i class="fas fa-download"></i>
                     Download PDF
                   </a>
@@ -2032,8 +2032,8 @@
     function cancelItem(orderId, itemIndex) {
       if (!confirm('Are you sure you want to cancel this item?')) return;
       
-      fetch('/cancelItem', {
-        method: 'POST',
+      fetch('/orders', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },

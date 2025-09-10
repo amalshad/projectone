@@ -62,6 +62,8 @@ const addCategory = async (req, res) => {
 // LIST & UNLIST CATEGORY
 const listCategory = async (req, res) => {
     try {
+        
+        
         const id = req.params.id;
         const category = await Category.findOne({ _id: id })
 

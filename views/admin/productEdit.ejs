@@ -120,8 +120,9 @@
               <div class="flex items-center justify-between mb-6">
                 <h4 class="text-lg font-semibold text-gray-900 flex items-center">
                   <i class="fas fa-cube text-primary mr-2"></i>
-                  Variant <%= index + 1 %>
+                  Variant
                 </h4>
+                <input name="variants[<%= index %>][_id]"  type="text" value="<%=variant._id%>" hidden>
                 <button 
                   type="button" 
                   onclick="removeVariant(this)" 
@@ -156,6 +157,7 @@
                   <label class="block text-sm font-semibold text-gray-700">Quantity</label>
                   <input 
                     type="number" 
+                    min="0"
                     name="variants[<%= index %>][quantity]" 
                     value="<%= variant.quantity %>"
                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
@@ -193,34 +195,37 @@
                   <% for (let i = 0; i < 4; i++) { %>
                     <div class="space-y-3">
                       <label class="block text-sm font-medium text-gray-700">Image <%= i + 1 %></label>
-                      <div class="relative">
+                      <div class="relative image-container" data-variant="<%= index %>" data-image="<%= i %>">
                         <input 
                           type="file" 
-                          accept="image/*" 
+                          accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" 
                           class="hidden image-input" 
                           name="variants[<%= index %>][productImage][]" 
-                          onchange="openCropper(event)"
+                          onchange="handleImageSelect(event)"
                           id="file-<%= index %>-<%= i %>"
                         />
                         
                         <% if (variant.productImage && variant.productImage[i]) { %>
-                          <!-- Existing Image -->
-                          <div class="relative group">
+                          <!-- Existing Image Display -->
+                          <div class="image-display-container relative group">
                             <img 
                               src="/uploads/productImages/<%= variant.productImage[i] %>"
-                              class="w-full h-32 object-cover rounded-xl border border-gray-200"
+                              class="existing-image w-full h-32 object-cover rounded-xl border border-gray-200 transition-all duration-300"
+                              alt="Product Image <%= i + 1 %>"
                             />
-                            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center">
+                            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center space-x-2">
                               <button 
                                 type="button"
                                 onclick="removeImage(this)"
                                 class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors duration-300"
+                                title="Remove Image"
                               >
                                 <i class="fas fa-trash"></i>
                               </button>
                               <label 
                                 for="file-<%= index %>-<%= i %>"
-                                class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg ml-2 cursor-pointer transition-colors duration-300"
+                                class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg cursor-pointer transition-colors duration-300"
+                                title="Change Image"
                               >
                                 <i class="fas fa-edit"></i>
                               </label>
@@ -229,18 +234,42 @@
                           </div>
                         <% } else { %>
                           <!-- Upload Area -->
-                          <label 
-                            for="file-<%= index %>-<%= i %>" 
-                            class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-300"
-                          >
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                              <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
-                              <p class="text-xs text-gray-500">Click to upload</p>
-                            </div>
-                          </label>
+                          <div class="upload-area">
+                            <label 
+                              for="file-<%= index %>-<%= i %>" 
+                              class="upload-label flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-300"
+                            >
+                              <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
+                                <p class="text-xs text-gray-500">Click to upload</p>
+                              </div>
+                            </label>
+                          </div>
                         <% } %>
                         
-                        <img class="preview-image absolute inset-0 w-full h-full object-cover rounded-xl hidden" />
+                        <!-- Preview Image (for new uploads) -->
+                        <div class="preview-container hidden">
+                          <div class="relative group">
+                            <img class="preview-image w-full h-32 object-cover rounded-xl border border-gray-200 transition-all duration-300" />
+                            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center space-x-2">
+                              <button 
+                                type="button"
+                                onclick="removePreviewImage(this)"
+                                class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors duration-300"
+                                title="Remove Image"
+                              >
+                                <i class="fas fa-trash"></i>
+                              </button>
+                              <label 
+                                for="file-<%= index %>-<%= i %>"
+                                class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg cursor-pointer transition-colors duration-300"
+                                title="Change Image"
+                              >
+                                <i class="fas fa-edit"></i>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   <% } %>
@@ -302,6 +331,19 @@
   </div>
 </div>
 
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300">
+  <div class="bg-white rounded-xl shadow-2xl border border-gray-200 p-4 flex items-center space-x-3 min-w-[300px]">
+    <div id="toastIcon" class="flex-shrink-0"></div>
+    <div class="flex-1">
+      <p id="toastMessage" class="text-sm font-semibold text-gray-900"></p>
+    </div>
+    <button id="closeToast" class="flex-shrink-0 text-gray-400 hover:text-gray-600 p-1">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</div>
+
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -310,16 +352,63 @@
   let variantIndex = <%= product.variants.length %>;
   let cropper, currentInput;
 
+  // Enhanced image validation
+  function validateImageFile(file) {
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!validTypes.includes(file.type)) {
+      showToast('Please select a valid image file (JPEG, PNG, WebP, or GIF)', 'error');
+      return false;
+    }
+
+    if (file.size > maxSize) {
+      showToast('Image size must be less than 5MB', 'error');
+      return false;
+    }
+
+    return true;
+  }
+
+  // Handle image selection with validation
+  function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!validateImageFile(file)) {
+      event.target.value = ''; // Clear the input
+      return;
+    }
+
+    openCropper(event);
+  }
+
   function removeVariant(button) {
     const variantBlock = button.closest('[data-index]');
     
-    // Add fade out animation
-    variantBlock.style.opacity = '0';
-    variantBlock.style.transform = 'translateY(-20px)';
-    
-    setTimeout(() => {
-      variantBlock.remove();
-    }, 300);
+    Swal.fire({
+      title: 'Remove Variant?',
+      text: 'This will permanently remove this variant and all its images.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, remove it!',
+      customClass: {
+        popup: 'rounded-2xl'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Add fade out animation
+        variantBlock.style.opacity = '0';
+        variantBlock.style.transform = 'translateY(-20px)';
+        
+        setTimeout(() => {
+          variantBlock.remove();
+          showToast('Variant removed successfully', 'success');
+        }, 300);
+      }
+    });
   }
 
   function addVariant() {
@@ -370,7 +459,7 @@
           <label class="block text-sm font-semibold text-gray-700">Quantity</label>
           <input 
             type="number" 
-            min="1" 
+            min="0" 
             name="variants[${variantIndex}][quantity]" 
             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300"
             placeholder="0"
@@ -409,25 +498,48 @@
           ${[1, 2, 3, 4].map(i => `
             <div class="space-y-3">
               <label class="block text-sm font-medium text-gray-700">Image ${i}</label>
-              <div class="relative">
+              <div class="relative image-container" data-variant="${variantIndex}" data-image="${i-1}">
                 <input 
                   type="file" 
-                  accept="image/*" 
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" 
                   class="hidden image-input" 
-                  onchange="openCropper(event)" 
+                  onchange="handleImageSelect(event)" 
                   name="variants[${variantIndex}][productImage][]"
-                  id="file-${variantIndex}-${i}"
+                  id="file-${variantIndex}-${i-1}"
                 />
-                <label 
-                  for="file-${variantIndex}-${i}" 
-                  class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-300"
-                >
-                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                    <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
-                    <p class="text-xs text-gray-500">Click to upload</p>
+                <div class="upload-area">
+                  <label 
+                    for="file-${variantIndex}-${i-1}" 
+                    class="upload-label flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-300"
+                  >
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                      <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
+                      <p class="text-xs text-gray-500">Click to upload</p>
+                    </div>
+                  </label>
+                </div>
+                <div class="preview-container hidden">
+                  <div class="relative group">
+                    <img class="preview-image w-full h-32 object-cover rounded-xl border border-gray-200 transition-all duration-300" />
+                    <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center space-x-2">
+                      <button 
+                        type="button"
+                        onclick="removePreviewImage(this)"
+                        class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors duration-300"
+                        title="Remove Image"
+                      >
+                        <i class="fas fa-trash"></i>
+                      </button>
+                      <label 
+                        for="file-${variantIndex}-${i-1}"
+                        class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg cursor-pointer transition-colors duration-300"
+                        title="Change Image"
+                      >
+                        <i class="fas fa-edit"></i>
+                      </label>
+                    </div>
                   </div>
-                </label>
-                <img class="preview-image absolute inset-0 w-full h-full object-cover rounded-xl hidden" />
+                </div>
               </div>
             </div>
           `).join('')}
@@ -445,6 +557,7 @@
     }, 100);
     
     variantIndex++;
+    showToast('New variant added successfully', 'success');
   }
 
   function validateProductForm() {
@@ -485,7 +598,7 @@
 
   function openCropper(event) {
     const file = event.target.files[0];
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!file) return;
 
     currentInput = event.target;
     const reader = new FileReader();
@@ -494,6 +607,7 @@
       const image = document.getElementById("cropperImage");
       image.src = e.target.result;
       document.getElementById("cropperModal").classList.remove("hidden");
+      document.body.style.overflow = 'hidden';
       
       image.onload = () => {
         cropper?.destroy();
@@ -502,6 +616,14 @@
           viewMode: 1,
           background: false,
           autoCropArea: 0.8,
+          responsive: true,
+          restore: false,
+          guides: true,
+          center: true,
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
         });
       };
     };
@@ -510,6 +632,9 @@
   }
 
   function cancelCrop() {
+    if (currentInput) {
+      currentInput.value = ''; // Clear the file input
+    }
     closeModal();
   }
 
@@ -517,63 +642,190 @@
     cropper?.destroy();
     cropper = null;
     document.getElementById("cropperModal").classList.add("hidden");
+    document.body.style.overflow = 'auto';
   }
 
   function cropImage() {
-    cropper.getCroppedCanvas({ width: 640, height: 640 }).toBlob(blob => {
+    if (!cropper) return;
+
+    const canvas = cropper.getCroppedCanvas({ 
+      width: 640, 
+      height: 640,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: 'high'
+    });
+
+    canvas.toBlob(blob => {
       const croppedFile = new File([blob], "cropped.jpg", { type: "image/jpeg" });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(croppedFile);
       currentInput.files = dataTransfer.files;
 
-      const container = currentInput.parentElement;
-      let previewImg = container.querySelector('.preview-image');
-      
-      if (!previewImg) {
-        previewImg = document.createElement('img');
-        previewImg.className = 'preview-image absolute inset-0 w-full h-full object-cover rounded-xl';
-        container.appendChild(previewImg);
-      }
-
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        previewImg.src = e.target.result;
-        previewImg.classList.remove("hidden");
-        container.querySelector('label').style.display = 'none';
-      };
-      
-      reader.readAsDataURL(croppedFile);
+      // Show preview
+      showImagePreview(currentInput, croppedFile);
       closeModal();
+      showToast('Image cropped and ready for upload', 'success');
+    }, 'image/jpeg', 0.9);
+  }
+
+  function showImagePreview(input, file) {
+    const container = input.closest('.image-container');
+    const uploadArea = container.querySelector('.upload-area');
+    const previewContainer = container.querySelector('.preview-container');
+    const previewImg = container.querySelector('.preview-image');
+    
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      previewImg.src = e.target.result;
+      uploadArea.classList.add('hidden');
+      previewContainer.classList.remove('hidden');
+      
+      // Add fade-in animation
+      previewContainer.style.opacity = '0';
+      setTimeout(() => {
+        previewContainer.style.opacity = '1';
+        previewContainer.style.transition = 'opacity 0.3s ease';
+      }, 50);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Remove existing image (from server)
+  function removeImage(button) {
+    const container = button.closest('.image-container');
+    const imageDisplay = container.querySelector('.image-display-container');
+    const uploadArea = container.querySelector('.upload-area');
+    const fileInput = container.querySelector('input[type="file"]');
+    const hiddenInput = container.querySelector('input[type="hidden"]');
+    
+    Swal.fire({
+      title: 'Remove Image?',
+      text: 'This will remove the current image. You can upload a new one.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, remove it!',
+      customClass: {
+        popup: 'rounded-2xl'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Add fade out animation
+        imageDisplay.style.opacity = '0';
+        imageDisplay.style.transform = 'scale(0.95)';
+        
+        setTimeout(() => {
+          // Remove the existing image display
+          imageDisplay.remove();
+          
+          // Remove the hidden input
+          if (hiddenInput) hiddenInput.remove();
+          
+          // Reset file input
+          fileInput.value = '';
+          
+          // Show upload area
+          if (!uploadArea) {
+            // Create new upload area if it doesn't exist
+            const newUploadArea = document.createElement('div');
+            newUploadArea.className = 'upload-area';
+            newUploadArea.innerHTML = `
+              <label 
+                for="${fileInput.id}" 
+                class="upload-label flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-300"
+              >
+                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                  <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
+                  <p class="text-xs text-gray-500">Click to upload</p>
+                </div>
+              </label>
+            `;
+            container.appendChild(newUploadArea);
+          } else {
+            uploadArea.classList.remove('hidden');
+          }
+          
+          // Add fade-in animation
+          const visibleUploadArea = container.querySelector('.upload-area');
+          visibleUploadArea.style.opacity = '0';
+          setTimeout(() => {
+            visibleUploadArea.style.opacity = '1';
+            visibleUploadArea.style.transition = 'opacity 0.3s ease';
+          }, 50);
+          
+          showToast('Image removed successfully', 'success');
+        }, 300);
+      }
     });
   }
 
-  function removeImage(button) {
-    const container = button.closest('.relative');
-    const previewImg = container.querySelector('.preview-image');
-    const hiddenInput = container.querySelector('input[type="hidden"]');
-    const label = container.querySelector('label');
-    const existingImg = container.querySelector('img:not(.preview-image)');
+  // Remove preview image (newly uploaded)
+  function removePreviewImage(button) {
+    const container = button.closest('.image-container');
+    const previewContainer = container.querySelector('.preview-container');
+    const uploadArea = container.querySelector('.upload-area');
+    const fileInput = container.querySelector('input[type="file"]');
     
     // Add fade out animation
-    if (existingImg) {
-      existingImg.style.opacity = '0';
-      existingImg.style.transform = 'scale(0.8)';
-    }
+    previewContainer.style.opacity = '0';
+    previewContainer.style.transform = 'scale(0.95)';
     
     setTimeout(() => {
-      if (hiddenInput) hiddenInput.remove();
-      if (existingImg) existingImg.remove();
-      if (previewImg) {
-        previewImg.src = '';
-        previewImg.classList.add('hidden');
-      }
-      if (label) label.style.display = 'flex';
+      // Hide preview and show upload area
+      previewContainer.classList.add('hidden');
+      uploadArea.classList.remove('hidden');
       
-      // Reset the file input
-      const fileInput = container.querySelector('input[type="file"]');
-      if (fileInput) fileInput.value = '';
+      // Reset file input
+      fileInput.value = '';
+      
+      // Add fade-in animation to upload area
+      uploadArea.style.opacity = '0';
+      setTimeout(() => {
+        uploadArea.style.opacity = '1';
+        uploadArea.style.transition = 'opacity 0.3s ease';
+      }, 50);
+      
+      showToast('Image removed successfully', 'success');
     }, 300);
   }
+
+  // Toast notification function
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastIcon = document.getElementById('toastIcon');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    const icons = {
+      success: '<div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-check text-green-600"></i></div>',
+      error: '<div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center"><i class="fas fa-exclamation-circle text-red-600"></i></div>',
+      warning: '<div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center"><i class="fas fa-exclamation-triangle text-yellow-600"></i></div>',
+      info: '<div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-info-circle text-blue-600"></i></div>'
+    };
+    
+    toastIcon.innerHTML = icons[type] || icons.success;
+    toastMessage.textContent = message;
+    
+    toast.classList.remove('translate-x-full');
+    
+    setTimeout(() => {
+      toast.classList.add('translate-x-full');
+    }, 4000);
+    
+    document.getElementById('closeToast').onclick = () => {
+      toast.classList.add('translate-x-full');
+    };
+  }
+
+  // Keyboard support for modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('cropperModal');
+      if (!modal.classList.contains('hidden')) {
+        cancelCrop();
+      }
+    }
+  });
 
   // Initialize page
   document.addEventListener('DOMContentLoaded', function() {
@@ -660,14 +912,14 @@
   }
 
   /* Image upload hover effects */
-  .image-input + label:hover {
+  .upload-label:hover {
     border-color: #8a2be2;
     background-color: rgba(138, 43, 226, 0.05);
   }
 
   /* Image hover effects */
   .group:hover img {
-    transform: scale(1.05);
+    transform: scale(1.02);
   }
 
   /* Button hover effects */
@@ -684,6 +936,28 @@
 
   .fa-spin {
     animation: spin 1s linear infinite;
+  }
+
+  /* Image container improvements */
+  .image-container {
+    position: relative;
+    min-height: 128px;
+  }
+
+  .upload-area,
+  .preview-container,
+  .image-display-container {
+    transition: all 0.3s ease;
+  }
+
+  /* Cropper modal improvements */
+  #cropperModal {
+    backdrop-filter: blur(4px);
+  }
+
+  /* Toast improvements */
+  #toast {
+    z-index: 9999;
   }
 </style>
 

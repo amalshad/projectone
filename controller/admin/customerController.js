@@ -14,9 +14,8 @@ const customerInfo = async (req, res) => {
                 { email: { $regex: search, $options: "i" } }
             ]
         };
-        console.log(query);
-        
 
+        const allUsers = await User.find()
         const users = await User.find(query)
             .sort({ createdOn: -1 })
             .limit(limit)
@@ -31,40 +30,35 @@ const customerInfo = async (req, res) => {
             customers: users,
             currentPage: page,
             totalPages,
-            search
+            search,
+            allUsers
         })
 
     } catch (error) {
-        console.log("Error at Customer",error)
+        console.log("Error at Customer", error)
         res.redirect("/admin/404")
     }
 }
 
-const blockCustomer = async (req, res) => {
-    try {
-        const id = req.params.id
 
-        await User.updateOne({ _id: id }, { $set: { isBlocked: true } })
-        res.json({ success: true });
-        
+const listCustomer = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const user = await User.findById(id)
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        user.isBlocked = !user.isBlocked;
+        await user.save();
+
+        res.json({ success: false, message: "Changed the User" })
+
     } catch (error) {
 
-        console.log("Error at block", error)
-        res.status(500).json({ success: false, message: "User Block Failed" })
+        console.error("Error at List Customer", error)
+        res.status(500).json({ success: false, message: "Internal Server Error" })
 
-    }
-};
-
-const unblockCustomer = async (req, res) => {
-    try {
-        const id = req.params.id
-
-        await User.updateOne({ _id: id }, { $set: { isBlocked: false } })
-        res.json({ success: true })
-    } catch (error) {
-
-        console.log("error at unblock", error)
-        res.status(500).json({ success: false, message: "User Unblock Failed" })
     }
 }
-module.exports = { customerInfo, blockCustomer, unblockCustomer }
+
+
+module.exports = { customerInfo, listCustomer }

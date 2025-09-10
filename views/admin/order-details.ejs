@@ -13,7 +13,7 @@
         <div class="h-6 w-px bg-gray-300"></div>
         <div>
           <h1 class="text-3xl font-bold text-gray-900">Order Details</h1>
-          <p class="text-gray-600 mt-1">Order #<%= order.orderId || order._id.toString().slice(-8).toUpperCase() %></p>
+          <p class="text-gray-600 mt-1">Order #<%= order.orderId  %></p>
         </div>
       </div>
       
@@ -448,84 +448,6 @@
 <script>
   let currentVerificationData = null;
 
-  async function updateOrderStatus(orderId, newStatus) {
-    if (!newStatus) return;
-    
-    const statusNames = {
-      'Processing': 'Processing',
-      'Pending': 'Pending',
-      'Shipped': 'Shipped',
-      'Delivered': 'Delivered',
-      'Cancelled': 'Cancelled',
-      'Return Accepted': 'Return Accepted',
-      'Return Rejected': 'Return Rejected'
-    };
-
-    const confirmResult = await Swal.fire({
-      title: `Update Order Status`,
-      text: `Are you sure you want to mark this order as ${statusNames[newStatus]}?`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: `Yes, Update to ${statusNames[newStatus]}`,
-      confirmButtonColor: "#8a2be2",
-      cancelButtonText: 'Cancel',
-      reverseButtons: true,
-      customClass: {
-        popup: 'rounded-2xl'
-      }
-    });
-
-    if (!confirmResult.isConfirmed) {
-      event.target.value = '';
-      return;
-    }
-
-    try {
-      const response = await fetch(`/admin/orders/${orderId}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        Swal.fire({
-          title: 'Status Updated!',
-          text: `Order has been marked as ${statusNames[newStatus]}`,
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false,
-          customClass: {
-            popup: 'rounded-2xl'
-          }
-        });
-        setTimeout(() => location.reload(), 2000);
-      } else {
-        Swal.fire({
-          title: "Error",
-          text: result.message || "Failed to update order status",
-          icon: "error",
-          customClass: {
-            popup: 'rounded-2xl'
-          }
-        });
-      }
-    } catch (err) {
-      console.error("Error:", err);
-      Swal.fire({
-        title: "Server Error",
-        text: "Unable to update order status",
-        icon: "error",
-        customClass: {
-          popup: 'rounded-2xl'
-        }
-      });
-    }
-    
-    event.target.value = '';
-  }
-
   async function updateItemStatus(orderId, itemIndex, newStatus) {
     if (!newStatus) return;
     
@@ -561,7 +483,7 @@
 
     try {
       const response = await fetch(`/admin/orders/${orderId}/${itemIndex}`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           itemIndex: itemIndex,
@@ -668,7 +590,7 @@
     
     try {
       const response = await fetch(`/admin/orders/${orderId}/${itemIndex}`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ itemIndex, status: actionStatus })
       });

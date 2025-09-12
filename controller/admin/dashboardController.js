@@ -11,7 +11,7 @@ const loadDashboard = async (req, res) => {
 
         const orders = await Order.find()
         const products = await Product.find()
-        const categories = await Category.find()
+        // const categories = await Category.find()
         const users = await User.find();
 
         const totalRevenue = orders.reduce((sum, order) => order.finalAmount + sum, 0)

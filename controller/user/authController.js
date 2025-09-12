@@ -37,6 +37,8 @@ const loadLogin = async (req, res) => {
 const signup = async (req, res) => {
 
   const { name, email, password, confirmPassword, referralCode } = req.body
+  
+  
   try {
     const find = await User.findOne({ email })
 

@@ -15,6 +15,7 @@ const loadCoupon = async (req, res) => {
             usageLimit: c.usageLimit || null,
             usageLimitPerUser: c.usageLimitPerUser || null,
             used: c.users ? c.users.length : 0, 
+            source:c.source,
             startDate: c.createdOn.toISOString().slice(0, 16),
             endDate: c.expireOn.toISOString().slice(0, 16),
             description: c.description,
@@ -47,6 +48,7 @@ const addCoupon = async (req, res) => {
             expireOn,
             offerPrice,
             minimumPrice,
+            source:"admin",
             couponType,
             description
         })

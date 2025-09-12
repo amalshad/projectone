@@ -114,9 +114,10 @@ const getSalesReportData = async (req, res) => {
 
         const salesData = await getSalesData(matchCondition);
         const chartData = await getChartData(matchCondition, period);
+        const topProducts = await getTopProducts(matchCondition);
         const overallMetrics = calculateOverallMetrics(salesData);
 
-        res.json({ success: true, data: { salesData, chartData, overallMetrics } });
+        res.json({ success: true, data: { salesData, chartData,topProducts, overallMetrics } });
 
     } catch (error) {
         console.error("Error fetching sales report data:", error);
@@ -304,4 +305,260 @@ function calculateOverallMetrics(salesData) {
     };
 }
 
-module.exports = { loadLogin, login, page_error, logout, loadSalesReport, getSalesReportData }
+const exportSalesReport = async (req, res) => {
+    try {
+        const { period = 'monthly', startDate, endDate, customRange, format = 'xlsx' } = req.query;
+        
+        // Use the same date range logic as your main report
+        let matchCondition = getDateRange(period, startDate, endDate, customRange);
+        
+        // Get sales data
+        const salesData = await getSalesData(matchCondition);
+        const overallMetrics = calculateOverallMetrics(salesData);
+        
+        // Format data for export
+        const exportData = salesData.map((order, index) => ({
+            'Sr. No.': index + 1,
+            'Order ID': '#' + order._id.toString().slice(-8).toUpperCase(),
+            'Customer Name': order.customerName || 'Guest',
+            'Customer Email': order.customerEmail || 'N/A',
+            'Order Date': new Date(order.orderDate).toLocaleDateString('en-IN'),
+            'Payment Method': order.paymentMethod || 'COD',
+            'Payment Status': order.paymentStatus || 'Pending',
+            'Order Status': order.status || 'Processing',
+            'Total Amount': order.totalAmount || 0,
+            'Discount': order.discount || 0,
+            'Shipping': order.shippingPrice || 0,
+            'Final Amount': order.finalAmount || 0,
+            'Items Count': order.itemsCount || 0
+        }));
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `sales-report-${period}-${timestamp}`;
+
+        if (format === 'csv') {
+            await exportToCSV(res, exportData, overallMetrics, filename);
+        } else if (format === 'xlsx') {
+            await exportToExcel(res, exportData, overallMetrics, filename, period);
+        } else if (format === 'pdf') {
+            await exportToPDF(res, exportData, overallMetrics, filename, period);
+        } else {
+            res.status(400).json({ success: false, message: 'Unsupported export format' });
+        }
+
+    } catch (error) {
+        console.error('Export error:', error);
+        res.status(500).json({ success: false, message: 'Failed to generate export' });
+    }
+};
+
+// CSV Export Function
+async function exportToCSV(res, data, metrics, filename) {
+    try {
+        const fields = [
+            'Sr. No.', 'Order ID', 'Customer Name', 'Customer Email', 'Order Date',
+            'Payment Method', 'Payment Status', 'Order Status', 'Total Amount',
+            'Discount', 'Shipping', 'Final Amount', 'Items Count'
+        ];
+
+        const json2csvParser = new Parser({ fields });
+        const csv = json2csvParser.parse(data);
+
+        // Add summary at the top
+        const summary = [
+            '# ShadElectro Sales Report',
+            `# Generated on: ${new Date().toLocaleDateString('en-IN')}`,
+            `# Total Orders: ${metrics.totalOrders}`,
+            `# Total Revenue: Rs.${metrics.totalRevenue.toLocaleString('en-IN')}`,
+            `# Total Discounts: Rs.${metrics.totalDiscount.toLocaleString('en-IN')}`,
+            `# Net Revenue: Rs.${metrics.netRevenue.toLocaleString('en-IN')}`,
+            '',
+            ''
+        ].join('\n');
+
+        res.header('Content-Type', 'text/csv; charset=utf-8');
+        res.header('Content-Disposition', `attachment; filename="${filename}.csv"`);
+        res.send(summary + csv);
+
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Excel Export Function
+async function exportToExcel(res, data, metrics, filename, period) {
+    try {
+        const workbook = new ExcelJS.Workbook();
+        
+        // Set workbook properties
+        workbook.creator = 'ShadElectro Admin';
+        workbook.lastModifiedBy = 'ShadElectro Admin';
+        workbook.created = new Date();
+        workbook.modified = new Date();
+
+        // Create summary worksheet
+        const summarySheet = workbook.addWorksheet('Summary');
+        
+        // Add summary data
+        summarySheet.mergeCells('A1:D1');
+        summarySheet.getCell('A1').value = 'ShadElectro - Sales Report Summary';
+        summarySheet.getCell('A1').font = { size: 16, bold: true, color: { argb: '8a2be2' } };
+        summarySheet.getCell('A1').alignment = { horizontal: 'center' };
+
+        summarySheet.addRow([]);
+        summarySheet.addRow(['Report Period:', period.toUpperCase()]);
+        summarySheet.addRow(['Generated On:', new Date().toLocaleDateString('en-IN')]);
+        summarySheet.addRow([]);
+        summarySheet.addRow(['Total Orders:', metrics.totalOrders]);
+        summarySheet.addRow(['Total Revenue:', `Rs.${metrics.totalRevenue.toLocaleString('en-IN')}`]);
+        summarySheet.addRow(['Total Discounts:', `Rs.${metrics.totalDiscount.toLocaleString('en-IN')}`]);
+        summarySheet.addRow(['Net Revenue:', `Rs.${metrics.netRevenue.toLocaleString('en-IN')}`]);
+        summarySheet.addRow(['Average Order Value:', `Rs.${metrics.averageOrderValue.toFixed(2)}`]);
+        summarySheet.addRow(['Coupon Usage Rate:', `${metrics.couponUsageRate}%`]);
+
+        // Create detailed data worksheet
+        const dataSheet = workbook.addWorksheet('Orders Details');
+
+        // Define columns
+        dataSheet.columns = [
+            { header: 'Sr. No.', key: 'Sr. No.', width: 8 },
+            { header: 'Order ID', key: 'Order ID', width: 18 },
+            { header: 'Customer Name', key: 'Customer Name', width: 25 },
+            { header: 'Customer Email', key: 'Customer Email', width: 30 },
+            { header: 'Order Date', key: 'Order Date', width: 15 },
+            { header: 'Payment Method', key: 'Payment Method', width: 18 },
+            { header: 'Payment Status', key: 'Payment Status', width: 18 },
+            { header: 'Order Status', key: 'Order Status', width: 15 },
+            { header: 'Total Amount', key: 'Total Amount', width: 15 },
+            { header: 'Discount', key: 'Discount', width: 12 },
+            { header: 'Shipping', key: 'Shipping', width: 12 },
+            { header: 'Final Amount', key: 'Final Amount', width: 15 },
+            { header: 'Items Count', key: 'Items Count', width: 12 }
+        ];
+
+        // Style header row
+        dataSheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+        dataSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '8a2be2' } };
+        dataSheet.getRow(1).alignment = { horizontal: 'center' };
+
+        // Add data rows
+        data.forEach(row => {
+            dataSheet.addRow(row);
+        });
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}.xlsx"`);
+
+        await workbook.xlsx.write(res);
+        res.end();
+
+    } catch (error) {
+        throw error;
+    }
+}
+
+// PDF Export Function
+async function exportToPDF(res, data, metrics, filename, period) {
+    try {
+        const doc = new PDFDocument({ 
+            size: 'A4', 
+            margin: 40,
+            info: {
+                Title: 'Sales Report - ShadElectro',
+                Author: 'ShadElectro Admin',
+                Subject: 'Sales Report'
+            }
+        });
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
+
+        doc.pipe(res);
+
+        // Header
+        doc.fontSize(20).fillColor('#8a2be2').text('ShadElectro', 40, 40);
+        doc.fontSize(16).fillColor('#000000').text('Sales Report', 40, 70);
+        doc.fontSize(12).text(`Period: ${period.toUpperCase()}`, 40, 95);
+        doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN')}`, 40, 115);
+        
+        // Summary Box
+        doc.rect(40, 140, 520, 100).strokeColor('#8a2be2').stroke();
+        doc.fontSize(14).fillColor('#8a2be2').text('Summary', 50, 150);
+        
+        doc.fontSize(10).fillColor('#000000')
+            .text(`Total Orders: ${metrics.totalOrders}`, 50, 175)
+            .text(`Total Revenue: Rs.${metrics.totalRevenue.toLocaleString('en-IN')}`, 50, 190)
+            .text(`Total Discounts: Rs.${metrics.totalDiscount.toLocaleString('en-IN')}`, 50, 205)
+            .text(`Net Revenue: Rs.${metrics.netRevenue.toLocaleString('en-IN')}`, 300, 175)
+            .text(`Average Order Value: Rs.${metrics.averageOrderValue.toFixed(2)}`, 300, 190)
+            .text(`Coupon Usage Rate: ${metrics.couponUsageRate}%`, 300, 205);
+
+        // Table Header
+        let y = 270;
+        doc.fontSize(9).fillColor('#8a2be2');
+        doc.text('Order ID', 40, y);
+        doc.text('Customer', 120, y);
+        doc.text('Date', 220, y);
+        doc.text('Amount', 270, y);
+        doc.text('Discount', 320, y);
+        doc.text('Final', 370, y);
+        doc.text('Status', 420, y);
+
+        // Draw header line
+        doc.strokeColor('#8a2be2').moveTo(40, y + 15).lineTo(560, y + 15).stroke();
+
+        y += 25;
+        doc.fontSize(8).fillColor('#000000');
+
+        // Table Data
+        data.forEach((row, index) => {
+            if (y > 750) {
+                doc.addPage();
+                y = 50;
+                
+                // Repeat header on new page
+                doc.fontSize(9).fillColor('#8a2be2');
+                doc.text('Order ID', 40, y);
+                doc.text('Customer', 120, y);
+                doc.text('Date', 220, y);
+                doc.text('Amount', 270, y);
+                doc.text('Discount', 320, y);
+                doc.text('Final', 370, y);
+                doc.text('Status', 420, y);
+                
+                doc.strokeColor('#8a2be2').moveTo(40, y + 15).lineTo(560, y + 15).stroke();
+                y += 25;
+                doc.fontSize(8).fillColor('#000000');
+            }
+
+            doc.text(row['Order ID'].substring(0, 12), 40, y);
+            doc.text(row['Customer Name'].substring(0, 15), 120, y);
+            doc.text(row['Order Date'], 220, y);
+            doc.text(`Rs.${row['Total Amount'].toLocaleString()}`, 270, y);
+            doc.text(`Rs.${row['Discount'].toLocaleString()}`, 320, y);
+            doc.text(`Rs.${row['Final Amount'].toLocaleString()}`, 370, y);
+            doc.text(row['Order Status'].substring(0, 10), 420, y);
+
+            y += 18;
+
+            // Add separator line every 5 rows
+            if ((index + 1) % 5 === 0) {
+                doc.strokeColor('#e0e0e0').moveTo(40, y).lineTo(560, y).stroke();
+                y += 5;
+            }
+        });
+
+        // Footer
+        doc.fontSize(8).fillColor('#666666')
+            .text(`Generated by ShadElectro Admin Panel on ${new Date().toLocaleString('en-IN')}`, 40, doc.page.height - 50);
+
+        doc.end();
+
+    } catch (error) {
+        throw error;
+    }
+}
+
+module.exports = { loadLogin, login, page_error, logout, loadSalesReport, getSalesReportData ,exportSalesReport }

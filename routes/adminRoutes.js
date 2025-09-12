@@ -51,7 +51,7 @@ router.delete("/offers/:id", AdminControllers.offerController.deleteOffer)
 
 router.get("/salesReport", adminController.loadSalesReport)
 router.get('/sales-report', adminController.getSalesReportData);
-// router.get('/sales-report/export', adminController.exportSalesReport); // Optional export endpoint
+router.get('/sales-report/export', adminController.exportSalesReport); // Optional export endpoint
 
 
 router.get("/dashboard",  AdminControllers.dashboardController.loadDashboard)

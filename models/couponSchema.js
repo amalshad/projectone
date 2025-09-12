@@ -47,6 +47,11 @@ const couponSchema = new Schema({
         enum: ["percentage", "fixed","free_shipping"],
         required: true
     },
+    source: {
+        type: String,
+        enum: ['referral', 'admin', 'promotion'],
+        default: 'admin'
+    },
     description: {
         type: String,
         required: false

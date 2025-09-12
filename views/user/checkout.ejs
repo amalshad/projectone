@@ -294,7 +294,7 @@
             
             <!-- Payment Options -->
             <div class="space-y-4 mb-6">
-              <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-0 border-primary">
+              <!-- <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-0 border-primary">
                 <input type="radio" name="paymentMethod" value="card" checked disabled
                   class="text-primary focus:ring-primary w-5 h-5">
                 <div class="ml-4 flex items-center">
@@ -306,30 +306,38 @@
                     <i class="fab fa-cc-amex text-2xl text-blue-500"></i>
                   </div>
                 </div>
-              </label>
+              </label> -->
               
               <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20">
                 <input type="radio" name="paymentMethod" value="razorpay"
                   class="text-primary focus:ring-primary w-5 h-5">
                 <div class="ml-4 flex items-center">
-                  <i class="fas fa-mobile-alt text-primary text-xl mr-3"></i>
-                  <span class="font-bold text-gray-900">UPI Payment</span>
+                  <i class="fas fa-university text-primary text-xl mr-3"></i>
+
+                  <span class="font-bold text-gray-900">Other</span>
                   <div class="ml-4 flex space-x-2">
-                    <span class="text-xs bg-primary text-white px-2 py-1 rounded">Razorpay</span>
-                    <span class="text-xs bg-primary text-white px-2 py-1 rounded">GPay</span>
-                    <span class="text-xs bg-primary text-white px-2 py-1 rounded">PhonePe</span>
+                    <span class="text-xs bg-primary text-white px-2 py-1 rounded">Card</span>
+                    <span class="text-xs bg-primary text-white px-2 py-1 rounded">UPI</span>
+                    <span class="text-xs bg-primary text-white px-2 py-1 rounded">Net Banking</span>
                   </div>
                 </div>
               </label>
               
-              <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20">
+              <!-- <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20">
                 <input type="radio" name="paymentMethod" value="netbanking"
                   class="text-primary focus:ring-primary w-5 h-5">
                 <div class="ml-4 flex items-center">
                   <i class="fas fa-university text-primary text-xl mr-3"></i>
                   <span class="font-bold text-gray-900">Net Banking</span>
                 </div>
-              </label>
+              </label> -->
+
+              <% const subtotal=cart?.items?.reduce((acc, item)=> {
+                    const product = item.productId;
+                    const variant = product.variants[item.variantIndex];
+                    return acc + (variant.finalPrice * item.quantity);
+                    }, 0) || 0; %>
+
 
               <label class="flex items-center cursor-pointer group p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-transparent hover:border-primary/20">
                 <input type="radio" name="paymentMethod" value="cod"
@@ -337,17 +345,13 @@
                 <div class="ml-4 flex items-center">
                   <i class="fas fa-money-bill-wave text-primary text-xl mr-3"></i>
                   <span class="font-bold text-gray-900">Cash on Delivery</span>
-                  <span class="ml-2 text-xs bg-success-color text-white px-2 py-1 rounded">Available</span>
+                  <span class="ml-2 text-xs <%= subtotal > 5000 ? 'bg-red-600' : 'bg-success-color' %> text-white px-2 py-1 rounded"><%= subtotal > 5000 ? 'Unavailable' : 'Available' %></span>
                 </div>
               </label>
             </div>
           </div>
 
-          <% const subtotal=cart?.items?.reduce((acc, item)=> {
-                    const product = item.productId;
-                    const variant = product.variants[item.variantIndex];
-                    return acc + (variant.finalPrice * item.quantity);
-                    }, 0) || 0; %>
+          
 
           <!-- Order Notes -->
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 opacity-0 animate-slide-in-left">
@@ -992,6 +996,9 @@
           console.error(err);
           showToast("Razorpay initiation failed", "error");
         });
+
+      }else if(paymentMethod==='cod' && finalAmount>5000){
+        return showToast("Order above Rs 5000 should not be allowed for COD",'error')
       } else {
         // Regular flow for COD or other payment methods
         fetch('/checkout', {

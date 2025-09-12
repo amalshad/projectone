@@ -86,6 +86,14 @@
                   <option value="prefer-not-to-say" <%= user.gender === 'prefer-not-to-say' ? 'selected' : '' %>>Prefer not to say</option> -->
                 </select>
               </div>
+
+              <div class="form-group">
+                <label for="referralCode" class="form-label">
+                  <i class="fas fa-user-friends "></i>
+                  Referal Code
+                </label>
+                <input type="text" id="referralCode" name="referralCode" value="<%= user.referralCode %>" class="form-input" disabled>
+              </div>
             </div>
 
             <div class="form-actions">
@@ -103,157 +111,9 @@
         </div>
 
         <!-- Order History Tab -->
-        <div id="orders" class="tab-content">
-          <div class="content-header">
-            <h1 class="content-title">Order History</h1>
-            <p class="content-subtitle">Track and manage your orders</p>
-          </div>
-
-          <div class="orders-container">
-            <% if (typeof orders !== 'undefined' && orders.length > 0) { %>
-              <% orders.forEach((order, index) => { %>
-                <div class="order-card animate-fade-in-up" style="animation-delay: <%= index * 0.1 %>s">
-                  <div class="order-header">
-                    <div class="order-info">
-                      <h3 class="order-number">Order #<%= order.orderNumber %></h3>
-                      <p class="order-date">Placed on <%= new Date(order.createdAt).toLocaleDateString() %></p>
-                    </div>
-                    <div class="order-status">
-                      <span class="status-badge <%= order.status.toLowerCase() %>">
-                        <i class="fas fa-<%= order.status === 'delivered' ? 'check-circle' : order.status === 'shipped' ? 'truck' : order.status === 'processing' ? 'clock' : 'times-circle' %>"></i>
-                        <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div class="order-items">
-                    <% order.items.forEach(item => { %>
-                      <div class="order-item">
-                        <img src="/uploads/productImages/<%= item.product.variants[0].productImage[0] %>" alt="<%= item.product.productName %>" class="item-image">
-                        <div class="item-details">
-                          <h4 class="item-name"><%= item.product.productName %></h4>
-                          <p class="item-variant">Variant: <%= item.variant.type %></p>
-                          <p class="item-quantity">Qty: <%= item.quantity %></p>
-                        </div>
-                        <div class="item-price">$<%= (item.price * item.quantity).toFixed(2) %></div>
-                      </div>
-                    <% }) %>
-                  </div>  
-                  <div class="order-footer">
-                    <div class="order-total">
-                      <strong>Total: $<%= order.totalAmount.toFixed(2) %></strong>
-                    </div>
-                    <div class="order-actions">
-                      <button class="btn btn-outline" onclick="viewOrderDetails('<%= order._id %>')">
-                        <i class="fas fa-eye"></i>
-                        View Details
-                      </button>
-                      <% if (order.status === 'delivered') { %>
-                        <button class="btn btn-primary" onclick="reorderItems('<%= order._id %>')">
-                          <i class="fas fa-redo"></i>
-                          Reorder
-                        </button>
-                      <% } %>
-                    </div>
-                  </div>
-                </div>
-              <% }) %>
-            <% } else { %>
-              <div class="empty-state">
-                <i class="fas fa-shopping-bag"></i>
-                <h3>No Orders Yet</h3>
-                <p>You haven't placed any orders yet. Start shopping to see your order history here.</p>
-                <a href="/shop" class="btn btn-primary">
-                  <i class="fas fa-shopping-cart"></i>
-                  Start Shopping
-                </a>
-              </div>
-            <% } %>
-          </div>
-        </div>
 
 
         <!-- Notifications Tab -->
-        <div id="notifications" class="tab-content">
-          <div class="content-header">
-            <h1 class="content-title">Notification Preferences</h1>
-            <p class="content-subtitle">Choose how you want to be notified</p>
-          </div>
-
-          <div class="notification-sections">
-            <div class="notification-card">
-              <div class="card-header">
-                <h3 class="card-title">
-                  <i class="fas fa-envelope"></i>
-                  Email Notifications
-                </h3>
-              </div>
-              <div class="notification-options">
-                <div class="notification-option">
-                  <div class="option-info">
-                    <h4>Order Updates</h4>
-                    <p>Get notified about order status changes</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-                <div class="notification-option">
-                  <div class="option-info">
-                    <h4>Promotional Emails</h4>
-                    <p>Receive special offers and deals</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-                <div class="notification-option">
-                  <div class="option-info">
-                    <h4>Product Recommendations</h4>
-                    <p>Get personalized product suggestions</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox">
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div class="notification-card">
-              <div class="card-header">
-                <h3 class="card-title">
-                  <i class="fas fa-mobile-alt"></i>
-                  Push Notifications
-                </h3>
-              </div>
-              <div class="notification-options">
-                <div class="notification-option">
-                  <div class="option-info">
-                    <h4>Order Shipped</h4>
-                    <p>When your order is shipped</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-                <div class="notification-option">
-                  <div class="option-info">
-                    <h4>Flash Sales</h4>
-                    <p>Limited time offers and flash sales</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox">
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>

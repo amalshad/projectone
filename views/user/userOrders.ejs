@@ -612,6 +612,13 @@
                       <i class="fas fa-map-marker-alt"></i>Track Order
                     </button>
 
+                     <% if (order.status === 'Pending' && order.paymentStatus !== 'Paid') { %>
+      <button id="retryPaymentBtn" onclick="handleRetryPayment('<%= order._id %>')" class="action-btn btn-warning" style="background: linear-gradient(135deg, #f52727, #c22c2c); color: white;">
+        <i class="fas fa-redo-alt"></i>
+        Retry Payment
+      </button>
+    <% } %>
+
                     <button onclick="reorderItems('<%= order._id %>')" class="action-btn btn-outline">
                       <i class="fas fa-redo"></i>Reorder
                     </button>
@@ -819,7 +826,7 @@
 
   <!-- Footer Include -->
   <%- include("../partials/user/footer") %>
-
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
     // Global variables for return modal
     let currentReturnOrderId = null;
@@ -1094,6 +1101,128 @@
       window.location.href = `/track-order/${orderId}`;
     }
 
+         // Retry Payment Functionality
+  // document.addEventListener('DOMContentLoaded', function() {
+  //   const retryBtn = document.getElementById('retryPaymentBtn');
+    
+  //   if (retryBtn) {
+  //     retryBtn.addEventListener('click', handleRetryPayment);
+  //   }
+  // });
+
+    async function handleRetryPayment(orderId) {
+    const retryBtn = document.getElementById('retryPaymentBtn');
+    // const orderId = orderId;
+    
+    try {
+      
+      retryBtn.classList.add('btn-loading');
+      retryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+      
+      showToast('Preparing payment retry...', 'Please wait while we set up your payment.', 'info');
+      
+      
+      const response = await fetch(`/orders/${orderId}/retry-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      console.log(data);
+      
+      
+      // Reset button state
+      retryBtn.classList.remove('btn-loading');
+      retryBtn.innerHTML = '<i class="fas fa-redo-alt"></i> Retry Payment';
+      
+      if (data.success) {
+        // Initialize Razorpay payment
+        const options = {
+          key: data.razorpayKey,
+          amount: data.amount,
+          currency: "INR",
+          name: "ShadElectro",
+          description: "Retry Payment for Order" +data.orderId.substring(0, 8).toUpperCase() ,
+          order_id: data.orderId,
+          handler: async function(response) {
+            try {
+              showToast('Verifying payment...', 'Please wait while we confirm your payment.', 'info');
+              
+             
+              const verifyResponse = await fetch('/verify-retry-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderId: orderId
+                })
+              });
+              
+              const verifyData = await verifyResponse.json();
+              
+              if (verifyData.success) {
+                showToast('Payment successful!', 'Your payment has been processed successfully. Redirecting...', 'success');
+                setTimeout(() => {
+                  window.location.reload();
+                }, 2000);
+              } else {
+                showToast('Payment verification failed', verifyData.message || 'Please try again or contact support.', 'error');
+              }
+            } catch (error) {
+              console.error('Verification error:', error);
+              showToast('Payment verification failed', 'Please contact support with your payment details.', 'error');
+            }
+          },
+          modal: {
+            ondismiss: function() {
+              showToast('Payment cancelled', 'You can retry payment anytime from this page.', 'info');
+            }
+          },
+          prefill: {
+            name: data.customer.name,
+            email: data.customer.email,
+            contact: data.customer.phone
+          },
+          theme: {
+            color: "#8a2be2"
+          },
+          retry: {
+            enabled: true,
+            max_count: 3
+          }
+        };
+        
+        const rzp = new Razorpay(options);
+        
+        // Handle payment failure
+        rzp.on('payment.failed', function (response) {
+          console.error('Payment failed:', response.error);
+          showToast('Payment failed', response.error.description || 'Please try again or use a different payment method.', 'error');
+        });
+        
+        rzp.open();
+        
+      } else {
+        showToast('Unable to retry payment', data.message || 'Please refresh the page and try again.', 'error');
+      }
+      
+    } catch (error) {
+      // Reset button state
+      retryBtn.classList.remove('btn-loading');
+      retryBtn.innerHTML = '<i class="fas fa-redo-alt"></i> Retry Payment';
+      
+      console.error('Retry payment error:', error);
+      showToast('Error preparing payment', 'Something went wrong', 'error');
+    }
+  }
+
+
     function reorderItems(orderId) {
       fetch(`/api/orders/${orderId}/reorder`, {
         method: 'POST',
@@ -1120,31 +1249,40 @@
       window.open(`/api/orders/${orderId}/invoice`, '_blank');
     }
 
-    function showToast(message, details = '', type = 'success') {
-      const toast = document.getElementById('successToast');
-      const messageElement = toast.querySelector('.toast-message');
-      const detailsElement = document.getElementById('toastDetails');
-      const icon = toast.querySelector('.toast-icon');
-
-      messageElement.textContent = type === 'success' ? 'Success!' : 'Error!';
-      detailsElement.textContent = details || message;
-
-      if (type === 'error') {
-        icon.className = 'fas fa-exclamation-circle toast-icon';
-        icon.style.color = '#dc3545';
-        toast.classList.add('error');
-      } else {
-        icon.className = 'fas fa-check-circle toast-icon';
-        icon.style.color = '#28a745';
-        toast.classList.remove('error');
-      }
-
-      toast.classList.add('show');
-
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 4000);
+function showToast(message, details = '', type = 'success') {
+    const toast = document.getElementById('successToast');
+    const messageElement = toast.querySelector('.toast-message');
+    const detailsElement = document.getElementById('toastDetails');
+    const icon = toast.querySelector('.toast-icon');
+    
+    // Set message based on type
+    if (type === 'success') {
+      messageElement.textContent = 'Success!';
+      icon.className = 'fas fa-check-circle toast-icon';
+      icon.style.color = '#28a745';
+      toast.classList.remove('error');
+    } else if (type === 'error') {
+      messageElement.textContent = 'Error!';
+      icon.className = 'fas fa-exclamation-circle toast-icon';
+      icon.style.color = '#dc3545';
+      toast.classList.add('error');
+    } else if (type === 'info') {
+      messageElement.textContent = 'Processing...';
+      icon.className = 'fas fa-info-circle toast-icon';
+      icon.style.color = '#17a2b8';
+      toast.classList.remove('error');
     }
+    
+    detailsElement.textContent = details || message;
+    
+    toast.classList.add('show');
+    
+    // Auto hide after appropriate time based on type
+    const hideTime = type === 'info' ? 3000 : 4000;
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, hideTime);
+  }
 
     // Close modals on outside click
     document.getElementById('cancelModal').addEventListener('click', function(e) {

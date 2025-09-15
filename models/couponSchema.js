@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { assign } = require("nodemailer/lib/shared");
 const { Schema } = mongoose;
 
 const couponSchema = new Schema({
@@ -60,16 +61,11 @@ const couponSchema = new Schema({
         type: Boolean,
         default: true
     },
-    //     expireOn: {
-    //   type: Date,
-    //   required: true,
-    //   validate: {
-    //     validator: function(value) {
-    //       return value > this.createdOn;
-    //     },
-    //     message: "Expiry date must be after creation date."
-    //   }
-    // }
+    assignedTo:{
+        type:Schema.Types.ObjectId,
+        ref:"User",
+        defualt:null
+    }
 
 
 })

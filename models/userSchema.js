@@ -57,15 +57,20 @@ const userSchema = new Schema({
         type:Schema.Types.ObjectId,
         ref:"Order"
     }],
-    referralCode:{
-        type:String
+      referralCode: {
+        type: String,
+        unique: true,
+        index: true,
+        required: true
     },
-    referredBy:{
-        type:String,
+    referredBy: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        default: null
     },
-    redeemedUser:[{
-        type:Schema.Types.ObjectId,
-        ref:"User"
+    redeemedUser: [{
+        type: Schema.Types.ObjectId,
+        ref: "User"
     }],
     
     

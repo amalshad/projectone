@@ -64,7 +64,9 @@ router.delete("/wishlist/:productId", sessionAuth, UserControllers.wishlistContr
 
 router.get("/checkout", UserControllers.checkoutController.loadCheckout);
 router.post("/checkout", sessionAuth, upload.none(), UserControllers.checkoutController.razorpayVerificationMiddleware ,UserControllers.checkoutController.checkout);
+
 router.get('/order-success/:id', sessionAuth, UserControllers.checkoutController.orderSuccess);
+
 
 router.get("/orders", sessionAuth, UserControllers.orderController.loadOrder);
 router.put("/orders", sessionAuth, UserControllers.orderController.cancelItem);
@@ -77,12 +79,13 @@ router.get("/wallet", sessionAuth, UserControllers.walletController.loadWallet);
 router.post("/wallet", sessionAuth, UserControllers.walletController.addMoney);
 router.post('/wallet/create-order', UserControllers.walletController.createWalletOrder);
 
-router.post('/create-razorpay-order', UserControllers.checkoutController.createRazorpayOrder);
-
 router.post("/coupon",UserControllers.checkoutController.couponApply)
-
 
 router.get("/orderInvoice/:orderId", sessionAuth, UserControllers.orderController.orderInvoice);
 router.get("/download-invoice/:id", UserControllers.orderController.downloadInvoice);
+
+router.post('/create-razorpay-order', UserControllers.checkoutController.createRazorpayOrder);
+router.post('/orders/:orderId/retry-payment', sessionAuth, UserControllers.checkoutController.retryPayment);
+router.post('/verify-retry-payment', sessionAuth, UserControllers.checkoutController.verifyRetryPayment);
 
 module.exports = router;

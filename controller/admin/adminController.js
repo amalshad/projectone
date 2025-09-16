@@ -77,15 +77,15 @@ const loadSalesReport = async (req, res) => {
     try {
         const { period = 'monthly', startDate, endDate, customRange } = req.query;
 
-        // Calculate date range based on period
+        
         let matchCondition = getDateRange(period, startDate, endDate, customRange);
 
-        // Get sales data with aggregation
+        
         const salesData = await getSalesData(matchCondition);
         const chartData = await getChartData(matchCondition, period);
         const topProducts = await getTopProducts(matchCondition);
 
-        // Calculate overall metrics
+        
         const overallMetrics = calculateOverallMetrics(salesData);
 
         res.render("salesReport", {
@@ -105,7 +105,7 @@ const loadSalesReport = async (req, res) => {
     }
 };
 
-// API endpoint for dynamic data
+
 const getSalesReportData = async (req, res) => {
     try {
         const { period, startDate, endDate, customRange } = req.query;
@@ -125,7 +125,7 @@ const getSalesReportData = async (req, res) => {
     }
 };
 
-// Helper function to get date range
+
 function getDateRange(period, startDate, endDate, customRange) {
     const now = new Date();
     let matchCondition = {};
@@ -184,7 +184,7 @@ function getDateRange(period, startDate, endDate, customRange) {
     return matchCondition;
 }
 
-// Get detailed sales data
+
 async function getSalesData(matchCondition) {
     return await Order.aggregate([
         { $match: matchCondition },
@@ -218,7 +218,7 @@ async function getSalesData(matchCondition) {
     ]);
 }
 
-// Get chart data based on period
+
 async function getChartData(matchCondition, period) {
     let groupBy = {};
 
@@ -255,7 +255,7 @@ async function getChartData(matchCondition, period) {
     return chartData;
 }
 
-// Get top selling products
+
 async function getTopProducts(matchCondition) {
     return await Order.aggregate([
         { $match: matchCondition },
@@ -282,7 +282,7 @@ async function getTopProducts(matchCondition) {
     ]);
 }
 
-// Calculate overall metrics
+
 function calculateOverallMetrics(salesData) {
     const totalOrders = salesData.length;
     const totalRevenue = salesData.reduce((sum, order) => sum + order.finalAmount, 0);
@@ -309,14 +309,14 @@ const exportSalesReport = async (req, res) => {
     try {
         const { period = 'monthly', startDate, endDate, customRange, format = 'xlsx' } = req.query;
         
-        // Use the same date range logic as your main report
+        
         let matchCondition = getDateRange(period, startDate, endDate, customRange);
         
-        // Get sales data
+        
         const salesData = await getSalesData(matchCondition);
         const overallMetrics = calculateOverallMetrics(salesData);
         
-        // Format data for export
+        
         const exportData = salesData.map((order, index) => ({
             'Sr. No.': index + 1,
             'Order ID': '#' + order._id.toString().slice(-8).toUpperCase(),
@@ -333,7 +333,7 @@ const exportSalesReport = async (req, res) => {
             'Items Count': order.itemsCount || 0
         }));
 
-        // Generate filename with timestamp
+        
         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
         const filename = `sales-report-${period}-${timestamp}`;
 
@@ -353,7 +353,7 @@ const exportSalesReport = async (req, res) => {
     }
 };
 
-// CSV Export Function
+
 async function exportToCSV(res, data, metrics, filename) {
     try {
         const fields = [
@@ -365,7 +365,7 @@ async function exportToCSV(res, data, metrics, filename) {
         const json2csvParser = new Parser({ fields });
         const csv = json2csvParser.parse(data);
 
-        // Add summary at the top
+        
         const summary = [
             '# ShadElectro Sales Report',
             `# Generated on: ${new Date().toLocaleDateString('en-IN')}`,
@@ -386,21 +386,21 @@ async function exportToCSV(res, data, metrics, filename) {
     }
 }
 
-// Excel Export Function
+
 async function exportToExcel(res, data, metrics, filename, period) {
     try {
         const workbook = new ExcelJS.Workbook();
         
-        // Set workbook properties
+        
         workbook.creator = 'ShadElectro Admin';
         workbook.lastModifiedBy = 'ShadElectro Admin';
         workbook.created = new Date();
         workbook.modified = new Date();
 
-        // Create summary worksheet
+        
         const summarySheet = workbook.addWorksheet('Summary');
         
-        // Add summary data
+        
         summarySheet.mergeCells('A1:D1');
         summarySheet.getCell('A1').value = 'ShadElectro - Sales Report Summary';
         summarySheet.getCell('A1').font = { size: 16, bold: true, color: { argb: '8a2be2' } };
@@ -417,10 +417,10 @@ async function exportToExcel(res, data, metrics, filename, period) {
         summarySheet.addRow(['Average Order Value:', `Rs.${metrics.averageOrderValue.toFixed(2)}`]);
         summarySheet.addRow(['Coupon Usage Rate:', `${metrics.couponUsageRate}%`]);
 
-        // Create detailed data worksheet
+        
         const dataSheet = workbook.addWorksheet('Orders Details');
 
-        // Define columns
+        
         dataSheet.columns = [
             { header: 'Sr. No.', key: 'Sr. No.', width: 8 },
             { header: 'Order ID', key: 'Order ID', width: 18 },
@@ -437,17 +437,17 @@ async function exportToExcel(res, data, metrics, filename, period) {
             { header: 'Items Count', key: 'Items Count', width: 12 }
         ];
 
-        // Style header row
+        
         dataSheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
         dataSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '8a2be2' } };
         dataSheet.getRow(1).alignment = { horizontal: 'center' };
 
-        // Add data rows
+        
         data.forEach(row => {
             dataSheet.addRow(row);
         });
 
-        // Set response headers
+        
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}.xlsx"`);
 
@@ -459,7 +459,7 @@ async function exportToExcel(res, data, metrics, filename, period) {
     }
 }
 
-// PDF Export Function
+
 async function exportToPDF(res, data, metrics, filename, period) {
     try {
         const doc = new PDFDocument({ 
@@ -477,13 +477,13 @@ async function exportToPDF(res, data, metrics, filename, period) {
 
         doc.pipe(res);
 
-        // Header
+        
         doc.fontSize(20).fillColor('#8a2be2').text('ShadElectro', 40, 40);
         doc.fontSize(16).fillColor('#000000').text('Sales Report', 40, 70);
         doc.fontSize(12).text(`Period: ${period.toUpperCase()}`, 40, 95);
         doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN')}`, 40, 115);
         
-        // Summary Box
+        
         doc.rect(40, 140, 520, 100).strokeColor('#8a2be2').stroke();
         doc.fontSize(14).fillColor('#8a2be2').text('Summary', 50, 150);
         
@@ -495,7 +495,7 @@ async function exportToPDF(res, data, metrics, filename, period) {
             .text(`Average Order Value: Rs.${metrics.averageOrderValue.toFixed(2)}`, 300, 190)
             .text(`Coupon Usage Rate: ${metrics.couponUsageRate}%`, 300, 205);
 
-        // Table Header
+       
         let y = 270;
         doc.fontSize(9).fillColor('#8a2be2');
         doc.text('Order ID', 40, y);
@@ -506,19 +506,19 @@ async function exportToPDF(res, data, metrics, filename, period) {
         doc.text('Final', 370, y);
         doc.text('Status', 420, y);
 
-        // Draw header line
+        
         doc.strokeColor('#8a2be2').moveTo(40, y + 15).lineTo(560, y + 15).stroke();
 
         y += 25;
         doc.fontSize(8).fillColor('#000000');
 
-        // Table Data
+        
         data.forEach((row, index) => {
             if (y > 750) {
                 doc.addPage();
                 y = 50;
                 
-                // Repeat header on new page
+                
                 doc.fontSize(9).fillColor('#8a2be2');
                 doc.text('Order ID', 40, y);
                 doc.text('Customer', 120, y);
@@ -543,14 +543,14 @@ async function exportToPDF(res, data, metrics, filename, period) {
 
             y += 18;
 
-            // Add separator line every 5 rows
+            s
             if ((index + 1) % 5 === 0) {
                 doc.strokeColor('#e0e0e0').moveTo(40, y).lineTo(560, y).stroke();
                 y += 5;
             }
         });
 
-        // Footer
+        
         doc.fontSize(8).fillColor('#666666')
             .text(`Generated by ShadElectro Admin Panel on ${new Date().toLocaleString('en-IN')}`, 40, doc.page.height - 50);
 

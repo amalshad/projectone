@@ -2,7 +2,8 @@ const User = require("../../models/userSchema")
 const Category = require("../../models/categorySchema");
 const Product = require("../../models/productSchema")
 const Order = require('../../models/orderSchema')
-const Wallet =require("../../models/walletSchema")
+const Wallet = require("../../models/walletSchema")
+const calculateRefund = require('../../utils/calculateRefund')
 const ejs = require("ejs");
 const path = require("path");
 const puppeteer = require("puppeteer");
@@ -50,14 +51,106 @@ const cancelItem = async (req, res) => {
       return res.status(404).json({ success: false, message: "Item cannot be cancelled now" })
     };
 
-    if(order.paymentStatus=='Paid'){
-      const userId =req.session.user||req.session.passport.user
+    if (order.paymentStatus == 'Paid') {
+      const userId = req.session.user || req.session.passport.user
       item.status = 'Cancelled';
-    item.cancelletionTitle = cancelletionTitle;
-    item.cancelletionReason = cancelletionReason;
-    // order.totalPrice-=item.quantity*item.price
-    // order.finalAmount-=item.quantity*item.price
-    const amount = item.price * item.quantity;
+      item.cancelletionTitle = cancelletionTitle;
+      item.cancelletionReason = cancelletionReason;
+      // order.totalPrice-=item.quantity*item.price
+      const amount = calculateRefund(order, [item])
+      order.finalAmount -= amount
+      console.log(amount)
+      let wallet = await Wallet.findOne({ userId });
+
+      const transaction = {
+        direction: "Credit",
+        amount,
+        description: `Refund for returned item in order ${order.orderId}`,
+        orderId
+      };
+
+      if (wallet) {
+        wallet.balance += amount;
+        wallet.transaction.push(transaction);
+        await wallet.save();
+
+      }
+      else {
+        wallet = new Wallet({
+          userId,
+          balance: amount,
+          transaction: [transaction]
+        });
+        await wallet.save();
+      }
+    } else {
+      item.status = 'Cancelled';
+      item.cancelletionTitle = cancelletionTitle;
+      item.cancelletionReason = cancelletionReason;
+      order.finalAmount -= item.quantity * item.price
+
+    }
+
+
+
+
+
+    const product = await Product.findById(item.product)
+    if (product) {
+      product.variants[item.variantIndex].quantity += item.quantity;
+      await product.save();
+    };
+
+    const allCancelled = order.orderedItems.every(it => it.status === 'Cancelled');
+    if (allCancelled) order.status = 'Cancelled';
+
+    await order.save()
+
+    res.json({ success: true, message: 'Item cancelled successfully' });
+
+  } catch (error) {
+
+    console.error('Error at cancelItem:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
+const cancelOrder = async (req, res) => {
+  try {
+
+    const { orderId } = req.params
+
+    const order = await Order.findById(orderId)
+
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+
+    for (let item of order.orderedItems) {
+
+      if (item.status === "Cancelled") continue;
+
+      const product = await Product.findById(item.product);
+      if (product) {
+
+        product.variants[item.variantIndex].quantity += item.quantity;
+        await product.save();
+
+      }
+      item.status = "Cancelled";
+    }
+
+    // const amount = order.finalAmount
+
+    order.status = "Cancelled";
+    await order.save();
+
+    if(order.paymentStatus=="Paid"){
+          
+      const userId = req.session.user || req.session.passport.use
+      // order.totalPrice-=item.quantity*item.price
+      
+      
+      let amount=order.finalAmount
       let wallet = await Wallet.findOne({ userId });
 
       const transaction = {
@@ -82,58 +175,6 @@ const cancelItem = async (req, res) => {
         await wallet.save();
       }
     }
-
-
-    item.status = 'Cancelled';
-    item.cancelletionTitle = cancelletionTitle;
-    item.cancelletionReason = cancelletionReason;
-
-    const product = await Product.findById(item.product)
-    if (product) {
-      product.variants[item.variantIndex].quantity += item.quantity;
-      await product.save();
-    };
-
-    const allCancelled = order.orderedItems.every(it => it.status === 'Cancelled');
-    if (allCancelled) order.status = 'Cancelled';
-
-    await order.save()
-
-    res.json({ success: true, message: 'Item cancelled successfully' });
-
-  } catch (error) {
-
-    console.error('Error at cancelItem:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-}
-
-const cancelOrder = async (req, res) => {
-  try {
-    const { orderId } = req.params
-
-    const order = await Order.findById(orderId)
-
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
-
-
-
-    for (let item of order.orderedItems) {
-
-      if (item.status === "Cancelled") continue;
-
-      const product = await Product.findById(item.product);
-      if (product) {
-
-        product.variants[item.variantIndex].quantity += item.quantity;
-        await product.save();
-
-      }
-      item.status = "Cancelled";
-    }
-
-    order.status = "Cancelled";
-    await order.save();
 
     res.json({ success: true, message: "Entire order cancelled and stock restored" });
 

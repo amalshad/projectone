@@ -3,6 +3,7 @@ const Category = require("../../models/categorySchema")
 const Order = require("../../models/orderSchema");
 const Wallet = require("../../models/walletSchema")
 const User = require("../../models/userSchema")
+const calculateRefund =require("../../utils/calculateRefund")
 
 
 
@@ -183,8 +184,10 @@ const updateItemStatus = async (req, res) => {
     }
 
     if (status === "Returned" || status === 'Return Accepted') {
-      const amount = item.price * item.quantity;
+      const amount = calculateRefund(order, [item])
+      order.finalAmount-=amount
       let wallet = await Wallet.findOne({ userId });
+
 
       const transaction = {
         direction: "Credit",
